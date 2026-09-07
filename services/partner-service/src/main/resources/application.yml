@@ -1,0 +1,25 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: partner-service
+  datasource:
+    url: ${PARTNER_DB_URL:jdbc:mysql://localhost:3306/kawa_partner}
+    username: ${MYSQL_USER:kawa}
+    password: ${MYSQL_PASSWORD:kawa}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KAWA_JWT_ISSUER_URI:http://localhost:9090/realms/kawa}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

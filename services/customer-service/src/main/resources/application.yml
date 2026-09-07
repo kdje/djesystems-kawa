@@ -1,0 +1,53 @@
+server:
+  port: 8081
+
+spring:
+  config:
+    # customer-service est dans :
+    # C:\DEV\KAWA\services\customer-service
+    # Le fichier est dans :
+    # C:\DEV\KAWA\.env.local
+    import: optional:file:../../.env.local[.properties]
+
+  application:
+    name: customer-service
+
+  datasource:
+    url: ${CUSTOMER_DB_URL}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+kawa:
+  azure:
+    tenant-id: ${AZURE_TENANT_ID}
+
+    client-id: ${CUSTOMER_SERVICE_CLIENT_ID}
+    client-secret: ${CUSTOMER_SERVICE_CLIENT_SECRET}
+
+    service-bus:
+      fully-qualified-namespace: ${AZURE_SERVICEBUS_FULLY_QUALIFIED_NAMESPACE}
+      topic: ${CUSTOMER_SERVICE_TOPIC}
+
+      wallet:
+        topic: ${WALLET_SERVICE_TOPIC}
+        subscription: ${WALLET_CUSTOMER_SUBSCRIPTION}
+
+  outbox:
+    publication-delay-ms: 2000
+
+  notification:
+    dispatch-delay-ms: 2000

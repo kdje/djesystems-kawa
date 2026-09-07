@@ -1,0 +1,41 @@
+server:
+  port: 8083
+
+spring:
+  config:
+    import: optional:file:../../.env.local[.properties]
+
+  application:
+    name: retailer-service
+
+  datasource:
+    url: ${RETAILER_DB_URL}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+kawa:
+  azure:
+    tenant-id: ${AZURE_TENANT_ID}
+    client-id: ${RETAILER_SERVICE_CLIENT_ID}
+    client-secret: ${RETAILER_SERVICE_CLIENT_SECRET}
+
+    service-bus:
+      fully-qualified-namespace: ${AZURE_SERVICEBUS_FULLY_QUALIFIED_NAMESPACE}
+      topic: ${RETAILER_SERVICE_TOPIC}
+
+  outbox:
+    publication-delay-ms: 2000

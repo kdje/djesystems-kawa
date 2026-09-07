@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="
+            http://maven.apache.org/POM/4.0.0
+            https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.djesystems.kawa</groupId>
+    <artifactId>kawa-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+
+    <name>KAWA Parent</name>
+
+    <properties>
+        <java.version>21</java.version>
+
+        <firebase-admin.version>9.10.0</firebase-admin.version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <azure-identity.version>1.18.5</azure-identity.version>
+        <azure-servicebus.version>7.17.18</azure-servicebus.version>
+    </properties>
+
+    <modules>
+        <module>services/customer-service</module>
+        <module>services/wallet-service</module>
+        <module>services/retailer-service</module>
+        <module>services/partner-service</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Version Firebase centralisée -->
+            <dependency>
+                <groupId>com.google.firebase</groupId>
+                <artifactId>firebase-admin</artifactId>
+                <version>${firebase-admin.version}</version>
+            </dependency>
+
+              <dependency>
+                  <groupId>com.azure</groupId>
+                  <artifactId>azure-identity</artifactId>
+                  <version>${azure-identity.version}</version>
+              </dependency>
+
+              <dependency>
+                  <groupId>com.azure</groupId>
+                  <artifactId>azure-messaging-servicebus</artifactId>
+                  <version>${azure-servicebus.version}</version>
+              </dependency>
+
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>

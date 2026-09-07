@@ -1,0 +1,9 @@
+asyncapi: 3.0.0
+info: {title: KAWA Domain Events, version: 1.0.0}
+channels:
+  customerPublicIdCreated: {address: customer.public-id.created.v1}
+  loyaltyAccountLinked: {address: loyalty.account.linked.v1}
+  loyaltyAccountUpdated: {address: loyalty.account.updated.v1}
+  loyaltyAccountUnlinked: {address: loyalty.account.unlinked.v1}
+  retailerActivated: {address: retailer.activated.v1}
+  retailerDeactivated: {address: retailer.deactivated.v1}

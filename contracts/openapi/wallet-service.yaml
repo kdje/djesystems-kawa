@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info: {title: KAWA Wallet Service API, version: 1.0.0}
+paths:
+  /api/v1/wallet/loyalty-accounts:
+    get: {summary: List loyalty accounts, responses: {'200': {description: Accounts}}}
+    post: {summary: Link retailer loyalty account, responses: {'201': {description: Linked}}}
+  /api/v1/wallet/loyalty-accounts/{id}:
+    delete: {summary: Unlink loyalty account, responses: {'204': {description: Unlinked}}}
+  /internal/v1/loyalty-accounts/resolve:
+    get: {summary: Internal resolution by customer and retailer, responses: {'200': {description: Loyalty identifier}, '404': {description: No link}}}

@@ -1,0 +1,208 @@
+kawa-mvp-architecture-v2/
+├── .github/
+│   └── workflows/
+│       ├── backend-ci.yml
+│       └── frontend-ci.yml
+├── apps/
+│   └── kawa-platform/
+│       ├── src/
+│       │   ├── app/
+│       │   │   └── App.tsx
+│       │   ├── features/
+│       │   │   ├── auth/
+│       │   │   │   └── README.md
+│       │   │   ├── kawa-id/
+│       │   │   │   └── README.md
+│       │   │   ├── profile/
+│       │   │   │   └── README.md
+│       │   │   ├── retailers/
+│       │   │   │   └── README.md
+│       │   │   └── wallet/
+│       │   │       └── README.md
+│       │   ├── shared/
+│       │   │   ├── api/
+│       │   │   │   └── README.md
+│       │   │   ├── firebase/
+│       │   │   │   └── firebase.ts
+│       │   │   └── styles.css
+│       │   └── main.tsx
+│       ├── .env.example
+│       ├── index.html
+│       ├── package.json
+│       ├── README.md
+│       ├── tsconfig.json
+│       └── vite.config.ts
+├── contracts/
+│   ├── asyncapi/
+│   │   └── kawa-events.yaml
+│   └── openapi/
+│       ├── customer-service.yaml
+│       ├── partner-service.yaml
+│       ├── retailer-service.yaml
+│       └── wallet-service.yaml
+├── docs/
+│   ├── adr/
+│   │   ├── 0001-microservices-from-mvp.md
+│   │   ├── 0002-stable-public-id-and-qr.md
+│   │   ├── 0003-database-per-service.md
+│   │   ├── 0004-responsive-web-first.md
+│   │   ├── 0005-security-boundaries.md
+│   │   ├── 0006-firebase-authentication.md
+│   │   └── 0007-mysql-for-mvp.md
+│   ├── database/
+│   │   └── README.md
+│   ├── diagrams/
+│   │   ├── container.mmd
+│   │   └── pos-resolution-sequence.mmd
+│   ├── domain/
+│   │   └── domain-model.md
+│   └── IMPLEMENTATION_ROADMAP.md
+├── infra/
+│   ├── gateway/
+│   │   └── nginx.conf
+│   ├── local/
+│   │   ├── mysql/
+│   │   │   └── init-multiple-databases.sql
+│   │   └── docker-compose.yml
+│   ├── observability/
+│   │   └── README.md
+│   └── terraform/
+│       └── README.md
+├── scripts/
+│   ├── build-all.ps1
+│   ├── dev-down.ps1
+│   └── dev-up.ps1
+├── services/
+│   ├── customer-service/
+│   │   ├── src/
+│   │   │   └── main/
+│   │   │       ├── java/
+│   │   │       │   └── com/
+│   │   │       │       └── djesystems/
+│   │   │       │           └── kawa/
+│   │   │       │               └── customer/
+│   │   │       │                   ├── api/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── application/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── config/
+│   │   │       │                   │   └── SecurityConfig.java
+│   │   │       │                   ├── domain/
+│   │   │       │                   │   ├── CustomerStatus.java
+│   │   │       │                   │   ├── package-info.java
+│   │   │       │                   │   └── PublicKawaIdFactory.java
+│   │   │       │                   ├── infrastructure/
+│   │   │       │                   │   ├── persistence/
+│   │   │       │                   │   │   └── package-info.java
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── security/
+│   │   │       │                   │   ├── FirebaseAuthenticationFilter.java
+│   │   │       │                   │   └── FirebaseConfiguration.java
+│   │   │       │                   └── CustomerServiceApplication.java
+│   │   │       └── resources/
+│   │   │           ├── db/
+│   │   │           │   └── migration/
+│   │   │           │       └── V1__create_customer.sql
+│   │   │           └── application.yml
+│   │   ├── Dockerfile
+│   │   ├── pom.xml
+│   │   └── README.md
+│   ├── partner-service/
+│   │   ├── src/
+│   │   │   └── main/
+│   │   │       ├── java/
+│   │   │       │   └── com/
+│   │   │       │       └── djesystems/
+│   │   │       │           └── kawa/
+│   │   │       │               └── partner/
+│   │   │       │                   ├── api/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── application/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── config/
+│   │   │       │                   │   └── SecurityConfig.java
+│   │   │       │                   ├── domain/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── infrastructure/
+│   │   │       │                   │   ├── persistence/
+│   │   │       │                   │   │   └── package-info.java
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   └── PartnerServiceApplication.java
+│   │   │       └── resources/
+│   │   │           ├── db/
+│   │   │           │   └── migration/
+│   │   │           │       └── V1__create_partner.sql
+│   │   │           └── application.yml
+│   │   ├── Dockerfile
+│   │   ├── pom.xml
+│   │   └── README.md
+│   ├── retailer-service/
+│   │   ├── src/
+│   │   │   └── main/
+│   │   │       ├── java/
+│   │   │       │   └── com/
+│   │   │       │       └── djesystems/
+│   │   │       │           └── kawa/
+│   │   │       │               └── retailer/
+│   │   │       │                   ├── api/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── application/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── config/
+│   │   │       │                   │   └── SecurityConfig.java
+│   │   │       │                   ├── domain/
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── infrastructure/
+│   │   │       │                   │   ├── persistence/
+│   │   │       │                   │   │   └── package-info.java
+│   │   │       │                   │   └── package-info.java
+│   │   │       │                   ├── security/
+│   │   │       │                   │   ├── FirebaseAuthenticationFilter.java
+│   │   │       │                   │   └── FirebaseConfiguration.java
+│   │   │       │                   └── RetailerServiceApplication.java
+│   │   │       └── resources/
+│   │   │           ├── db/
+│   │   │           │   └── migration/
+│   │   │           │       └── V1__create_retailer.sql
+│   │   │           └── application.yml
+│   │   ├── Dockerfile
+│   │   ├── pom.xml
+│   │   └── README.md
+│   └── wallet-service/
+│       ├── src/
+│       │   └── main/
+│       │       ├── java/
+│       │       │   └── com/
+│       │       │       └── djesystems/
+│       │       │           └── kawa/
+│       │       │               └── wallet/
+│       │       │                   ├── api/
+│       │       │                   │   └── package-info.java
+│       │       │                   ├── application/
+│       │       │                   │   └── package-info.java
+│       │       │                   ├── config/
+│       │       │                   │   └── SecurityConfig.java
+│       │       │                   ├── domain/
+│       │       │                   │   └── package-info.java
+│       │       │                   ├── infrastructure/
+│       │       │                   │   ├── persistence/
+│       │       │                   │   │   └── package-info.java
+│       │       │                   │   └── package-info.java
+│       │       │                   ├── security/
+│       │       │                   │   ├── FirebaseAuthenticationFilter.java
+│       │       │                   │   └── FirebaseConfiguration.java
+│       │       │                   └── WalletServiceApplication.java
+│       │       └── resources/
+│       │           ├── db/
+│       │           │   └── migration/
+│       │           │       └── V1__create_wallet.sql
+│       │           └── application.yml
+│       ├── Dockerfile
+│       ├── pom.xml
+│       └── README.md
+├── .env.example
+├── .gitignore
+├── ARCHITECTURE.md
+├── pom.xml
+├── README.md
+└── TREE.txt

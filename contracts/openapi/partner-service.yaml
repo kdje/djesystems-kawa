@@ -1,0 +1,8 @@
+openapi: 3.0.3
+info: {title: KAWA Partner POS API, version: 1.0.0}
+paths:
+  /partner/v1/loyalty/resolve:
+    post:
+      summary: Resolve stable KAWA public ID to retailer loyalty identifier
+      description: retailerCode is optional for a client bound to one retailer and required for authorized multi-retailer integrators.
+      responses: {'200': {description: Resolved}, '403': {description: Unauthorized retailer}, '404': {description: Unknown customer or loyalty account}}

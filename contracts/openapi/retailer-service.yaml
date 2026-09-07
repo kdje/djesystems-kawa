@@ -1,0 +1,47 @@
+paths:
+  /api/v1/retailers:
+    get:
+      summary: List active retailers
+      responses:
+        '200':
+          description: Retailers
+
+  /api/v1/retailers/{code}:
+    get:
+      summary: Get retailer
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Retailer
+        '404':
+          description: Retailer not found
+
+components:
+  schemas:
+    Retailer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: CARREFOUR
+        name:
+          type: string
+          example: Carrefour
+        countryCode:
+          type: string
+          example: FR
+        logoUrl:
+          type: string
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE

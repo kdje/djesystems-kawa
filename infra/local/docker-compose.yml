@@ -1,0 +1,82 @@
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: kawa_customer
+      MYSQL_USER: ${MYSQL_USER:-kawa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-kawa}
+    ports:
+      - "3306:3306"
+    volumes:
+      - kawa_mysql:/var/lib/mysql
+      - ./mysql/init-multiple-databases.sql:/docker-entrypoint-initdb.d/01-create-databases.sql:ro
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+    ports:
+      - "8089:80"
+
+  customer-service:
+    build: ../../services/customer-service
+    environment:
+      CUSTOMER_DB_URL: jdbc:mysql://mysql:3306/kawa_customer
+      MYSQL_USER: ${MYSQL_USER:-kawa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-kawa}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-service-account.json
+    volumes:
+      - ${FIREBASE_SERVICE_ACCOUNT_PATH:-./secrets/firebase-service-account.json}:/run/secrets/firebase-service-account.json:ro
+    depends_on:
+      - mysql
+    ports:
+      - "8081:8081"
+
+  wallet-service:
+    build: ../../services/wallet-service
+    environment:
+      WALLET_DB_URL: jdbc:mysql://mysql:3306/kawa_wallet
+      MYSQL_USER: ${MYSQL_USER:-kawa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-kawa}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-service-account.json
+    volumes:
+      - ${FIREBASE_SERVICE_ACCOUNT_PATH:-./secrets/firebase-service-account.json}:/run/secrets/firebase-service-account.json:ro
+    depends_on:
+      - mysql
+    ports:
+      - "8082:8082"
+
+  retailer-service:
+    build: ../../services/retailer-service
+    environment:
+      RETAILER_DB_URL: jdbc:mysql://mysql:3306/kawa_retailer
+      MYSQL_USER: ${MYSQL_USER:-kawa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-kawa}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-service-account.json
+    volumes:
+      - ${FIREBASE_SERVICE_ACCOUNT_PATH:-./secrets/firebase-service-account.json}:/run/secrets/firebase-service-account.json:ro
+    depends_on:
+      - mysql
+    ports:
+      - "8083:8083"
+
+  partner-service:
+    build: ../../services/partner-service
+    environment:
+      PARTNER_DB_URL: jdbc:mysql://mysql:3306/kawa_partner
+      MYSQL_USER: ${MYSQL_USER:-kawa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-kawa}
+      KAWA_PARTNER_JWT_ISSUER_URI: ${KAWA_PARTNER_JWT_ISSUER_URI:-http://host.docker.internal:9090/realms/kawa-partners}
+    depends_on:
+      - mysql
+      - customer-service
+      - wallet-service
+    ports:
+      - "8084:8084"
+
+volumes:
+  kawa_mysql:

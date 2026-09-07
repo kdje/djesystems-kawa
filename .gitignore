@@ -1,0 +1,27 @@
+target/
+node_modules/
+dist/
+.idea/
+.vscode/
+.classpath
+.project
+.settings/
+*.iml
+.env
+*.log
+
+# Local environment / secrets
+.env.local
+.env.*.local
+
+# Firebase / credentials
+**/firebase-service-account.json
+**/*service-account*.json
+infra/local/secrets/
+
+# Certificates / private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks

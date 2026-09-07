@@ -1,0 +1,34 @@
+/api/v1/customers/me:
+  get:
+    summary: Get current KAWA customer
+    security:
+      - firebaseAuth: []
+    responses:
+      '200':
+        description: Current customer
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      '401':
+        $ref: '#/components/responses/Unauthorized'
+
+Customer:
+  type: object
+  properties:
+    publicId:
+      type: string
+      example: d73f8cb29aed4cc4941885b31e8d1327
+    email:
+      type: string
+      format: email
+    firstName:
+      type: string
+    lastName:
+      type: string
+    status:
+      type: string
+      enum:
+        - ACTIVE
+        - SUSPENDED
+        - CLOSED

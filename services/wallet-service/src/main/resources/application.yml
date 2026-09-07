@@ -1,0 +1,64 @@
+server:
+  port: 8082
+
+spring:
+  config:
+    import: optional:file:../../.env.local[.properties]
+
+  application:
+    name: wallet-service
+
+  datasource:
+    url: ${WALLET_DB_URL}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KAWA_ENTRA_ISSUER_URI}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+kawa:
+  security:
+    issuer-uri: ${KAWA_ENTRA_ISSUER_URI}
+    audience: ${WALLET_SERVICE_CLIENT_ID}
+
+  azure:
+    tenant-id: ${AZURE_TENANT_ID}
+
+    client-id: ${WALLET_SERVICE_CLIENT_ID}
+    client-secret: ${WALLET_SERVICE_CLIENT_SECRET}
+
+    service-bus:
+      fully-qualified-namespace: ${AZURE_SERVICEBUS_FULLY_QUALIFIED_NAMESPACE}
+
+      wallet:
+        topic: ${WALLET_SERVICE_TOPIC}
+
+      customer:
+        topic: ${CUSTOMER_SERVICE_TOPIC}
+        subscription: ${CUSTOMER_WALLET_SUBSCRIPTION}
+
+      retailer:
+        topic: ${RETAILER_SERVICE_TOPIC}
+        subscription: ${RETAILER_WALLET_SUBSCRIPTION}
+
+  wallet:
+    outbox:
+      fixed-delay-ms: 2000
+      transport: servicebus

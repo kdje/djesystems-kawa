@@ -1,0 +1,13 @@
+sequenceDiagram
+participant U as User
+participant POS as POS
+participant P as partner-service
+participant C as customer-service
+participant W as wallet-service
+U->>POS: Presents permanent KAWA QR
+POS->>P: POST /partner/v1/loyalty/resolve
+P->>C: Lookup by public ID
+C-->>P: private internal UUID
+P->>W: Resolve by customer + retailer
+W-->>P: loyalty identifier
+P-->>POS: loyalty identifier

@@ -1,0 +1,13 @@
+flowchart LR
+WEB[KAWA Responsive Web]-->GW[Gateway]
+POS[Retailer POS]-->GW
+GW-->CS[customer-service]
+GW-->WS[wallet-service]
+GW-->RS[retailer-service]
+GW-->PS[partner-service]
+PS-->CS
+PS-->WS
+CS-->DB[(PostgreSQL)]
+WS-->DB
+RS-->DB
+PS-->DB
