@@ -1,0 +1,238 @@
+services:
+
+  # ==========================================================
+  # CUSTOMER DATABASE
+  # ==========================================================
+  customer-db:
+    image: mysql:8.4
+    container_name: kawa-customer-db
+    restart: unless-stopped
+
+    environment:
+      MYSQL_DATABASE: kawa_customer
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${KAWA_DB_ROOT_PASSWORD}
+
+    ports:
+      - "3307:3306"
+
+    volumes:
+      - kawa-customer-db-data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${KAWA_DB_ROOT_PASSWORD}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  # ==========================================================
+  # CUSTOMER SERVICE
+  # ==========================================================
+  customer-service:
+    container_name: kawa-customer-service
+
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: customer-service
+
+    restart: unless-stopped
+
+    ports:
+      - "8081:8081"
+
+    env_file:
+      - .env.local
+
+    environment:
+      SERVER_PORT: 8081
+
+      CUSTOMER_DB_URL: jdbc:mysql://customer-db:3306/kawa_customer?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+
+      GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-service-account.json
+
+    volumes:
+      - "C:/KAWA/secrets/kawa-dev-74031-firebase-adminsdk-fbsvc-1067a289d9.json:/app/secrets/firebase-service-account.json:ro"
+
+    depends_on:
+      customer-db:
+        condition: service_healthy
+
+
+  # ==========================================================
+  # WALLET DATABASE
+  # ==========================================================
+  wallet-db:
+    image: mysql:8.4
+    container_name: kawa-wallet-db
+    restart: unless-stopped
+
+    environment:
+      MYSQL_DATABASE: kawa_wallet
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${KAWA_DB_ROOT_PASSWORD}
+
+    ports:
+      - "3308:3306"
+
+    volumes:
+      - kawa-wallet-db-data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${KAWA_DB_ROOT_PASSWORD}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  # ==========================================================
+  # WALLET SERVICE
+  # ==========================================================
+  wallet-service:
+    container_name: kawa-wallet-service
+
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: wallet-service
+
+    restart: unless-stopped
+
+    ports:
+      - "8082:8082"
+
+    env_file:
+      - .env.local
+
+    environment:
+      SERVER_PORT: 8082
+
+      WALLET_DB_URL: jdbc:mysql://wallet-db:3306/kawa_wallet?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+
+    depends_on:
+      wallet-db:
+        condition: service_healthy
+
+  # ==========================================================
+  # RETAILER DATABASE
+  # ==========================================================
+  retailer-db:
+    image: mysql:8.4
+    container_name: kawa-retailer-db
+    restart: unless-stopped
+
+    environment:
+      MYSQL_DATABASE: kawa_retailer
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${KAWA_DB_ROOT_PASSWORD}
+
+    ports:
+      - "3309:3306"
+
+    volumes:
+      - kawa-retailer-db-data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${KAWA_DB_ROOT_PASSWORD}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  # ==========================================================
+  # RETAILER SERVICE
+  # ==========================================================
+  retailer-service:
+    container_name: kawa-retailer-service
+
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: retailer-service
+
+    restart: unless-stopped
+
+    ports:
+      - "8083:8083"
+
+    env_file:
+      - .env.local
+
+    environment:
+      SERVER_PORT: 8083
+
+      RETAILER_DB_URL: jdbc:mysql://retailer-db:3306/kawa_retailer?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+
+    depends_on:
+      retailer-db:
+        condition: service_healthy
+
+  # ==========================================================
+  # KAWA PLATFORM - FRONTEND
+  # ==========================================================
+  kawa-platform:
+    container_name: kawa-platform
+
+    build:
+      context: ./apps/kawa-platform
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    ports:
+      - "5173:80"
+
+
+# ============================================================
+# PERSISTENT VOLUMES
+# ============================================================
+volumes:
+  kawa-customer-db-data:
+  kawa-wallet-db-data:
+  kawa-retailer-db-data:

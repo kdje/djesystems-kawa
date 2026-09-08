@@ -1,0 +1,43 @@
+# ============================================================
+# KAWA - Build Spring Boot service
+# ============================================================
+
+FROM maven:3.9.11-eclipse-temurin-21 AS build
+
+WORKDIR /workspace
+
+ARG SERVICE
+
+# Le monorepo Maven complet est copié afin que Maven puisse
+# résoudre le parent et les éventuels modules dépendants.
+COPY pom.xml .
+COPY services ./services
+
+RUN mvn -pl services/${SERVICE} -am \
+    clean package \
+    -DskipTests
+
+# Récupération du JAR Spring Boot
+RUN JAR_FILE=$(find services/${SERVICE}/target \
+    -maxdepth 1 \
+    -type f \
+    -name "*.jar" \
+    ! -name "*.original" \
+    | head -n 1) \
+    && test -n "$JAR_FILE" \
+    && cp "$JAR_FILE" /tmp/app.jar
+
+
+# ============================================================
+# Runtime
+# ============================================================
+
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+COPY --from=build /tmp/app.jar /app/app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
