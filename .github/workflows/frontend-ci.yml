@@ -1,12 +1,26 @@
 name: Frontend CI
-on: [push, pull_request]
+
+on:
+  pull_request:
+    branches:
+      - develop
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults: {run: {working-directory: apps/kawa-platform}}
+
+    defaults:
+      run:
+        working-directory: apps/kawa-platform
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - run: npm install
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/kawa-platform/package-lock.json
+
+      - run: npm ci
       - run: npm run build
