@@ -1,0 +1,127 @@
+name: kawa-dev
+
+services:
+  customer-db:
+    image: mysql:8.4
+    container_name: kawa-customer-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: kawa_customer
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${KAWA_DB_ROOT_PASSWORD}
+    volumes:
+      - kawa-customer-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    networks: [kawa-net]
+
+  customer-service:
+    image: ${ECR_REGISTRY}/kawa-customer-service:${IMAGE_TAG}
+    container_name: kawa-customer-service
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      SERVER_PORT: 8081
+      CUSTOMER_DB_URL: jdbc:mysql://customer-db:3306/kawa_customer?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-service-account.json
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - ./secrets/firebase-service-account.json:/app/secrets/firebase-service-account.json:ro
+    depends_on:
+      customer-db:
+        condition: service_healthy
+    networks: [kawa-net]
+
+  wallet-db:
+    image: mysql:8.4
+    container_name: kawa-wallet-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: kawa_wallet
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${KAWA_DB_ROOT_PASSWORD}
+    volumes:
+      - kawa-wallet-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    networks: [kawa-net]
+
+  wallet-service:
+    image: ${ECR_REGISTRY}/kawa-wallet-service:${IMAGE_TAG}
+    container_name: kawa-wallet-service
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      SERVER_PORT: 8082
+      WALLET_DB_URL: jdbc:mysql://wallet-db:3306/kawa_wallet?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:8082:8082"
+    depends_on:
+      wallet-db:
+        condition: service_healthy
+    networks: [kawa-net]
+
+  retailer-db:
+    image: mysql:8.4
+    container_name: kawa-retailer-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: kawa_retailer
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${KAWA_DB_ROOT_PASSWORD}
+    volumes:
+      - kawa-retailer-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    networks: [kawa-net]
+
+  retailer-service:
+    image: ${ECR_REGISTRY}/kawa-retailer-service:${IMAGE_TAG}
+    container_name: kawa-retailer-service
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      SERVER_PORT: 8083
+      RETAILER_DB_URL: jdbc:mysql://retailer-db:3306/kawa_retailer?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MYSQL_USER: kawa
+      MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+    ports:
+      - "127.0.0.1:8083:8083"
+    depends_on:
+      retailer-db:
+        condition: service_healthy
+    networks: [kawa-net]
+
+  kawa-platform:
+    image: ${ECR_REGISTRY}/kawa-platform:${IMAGE_TAG}
+    container_name: kawa-platform
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5173:80"
+    networks: [kawa-net]
+
+volumes:
+  kawa-customer-db-data:
+  kawa-wallet-db-data:
+  kawa-retailer-db-data:
+
+networks:
+  kawa-net:
+    driver: bridge

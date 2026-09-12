@@ -1,0 +1,165 @@
+name: Deploy KAWA DEV
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v6.2.4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+
+      - name: Login Docker to Amazon ECR
+        id: ecr
+        shell: bash
+        run: |
+          set -euo pipefail
+          REGISTRY="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com"
+          aws ecr get-login-password --region "${{ vars.AWS_REGION }}" | docker login --username AWS --password-stdin "$REGISTRY"
+          echo "registry=$REGISTRY" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend images
+        shell: bash
+        run: |
+          set -euo pipefail
+          REGISTRY="${{ steps.ecr.outputs.registry }}"
+          for SERVICE in customer-service wallet-service retailer-service; do
+            docker build \
+              -f Dockerfile.service \
+              --build-arg SERVICE="$SERVICE" \
+              -t "$REGISTRY/kawa-$SERVICE:${GITHUB_SHA}" \
+              -t "$REGISTRY/kawa-$SERVICE:dev" \
+              .
+            docker push "$REGISTRY/kawa-$SERVICE:${GITHUB_SHA}"
+            docker push "$REGISTRY/kawa-$SERVICE:dev"
+          done
+
+      - name: Build and push frontend image
+        shell: bash
+        run: |
+          set -euo pipefail
+          REGISTRY="${{ steps.ecr.outputs.registry }}"
+          docker build \
+            -f apps/kawa-platform/Dockerfile \
+            --build-arg VITE_FIREBASE_API_KEY="${{ vars.VITE_FIREBASE_API_KEY }}" \
+            --build-arg VITE_FIREBASE_AUTH_DOMAIN="${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg VITE_FIREBASE_PROJECT_ID="${{ vars.VITE_FIREBASE_PROJECT_ID }}" \
+            --build-arg VITE_FIREBASE_APP_ID="${{ vars.VITE_FIREBASE_APP_ID }}" \
+            --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}" \
+            --build-arg VITE_FIREBASE_STORAGE_BUCKET="${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}" \
+            --build-arg VITE_FIREBASE_VAPID_KEY="${{ vars.VITE_FIREBASE_VAPID_KEY }}" \
+            --build-arg VITE_CUSTOMER_API_BASE_URL="${{ vars.VITE_CUSTOMER_API_BASE_URL }}" \
+            -t "$REGISTRY/kawa-platform:${GITHUB_SHA}" \
+            -t "$REGISTRY/kawa-platform:dev" \
+            apps/kawa-platform
+          docker push "$REGISTRY/kawa-platform:${GITHUB_SHA}"
+          docker push "$REGISTRY/kawa-platform:dev"
+
+      - name: Store DEV runtime secrets in SSM Parameter Store
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          KAWA_DB_PASSWORD: ${{ secrets.KAWA_DB_PASSWORD }}
+          KAWA_DB_ROOT_PASSWORD: ${{ secrets.KAWA_DB_ROOT_PASSWORD }}
+          CUSTOMER_SERVICE_CLIENT_SECRET: ${{ secrets.CUSTOMER_SERVICE_CLIENT_SECRET }}
+          WALLET_SERVICE_CLIENT_SECRET: ${{ secrets.WALLET_SERVICE_CLIENT_SECRET }}
+          RETAILER_SERVICE_CLIENT_SECRET: ${{ secrets.RETAILER_SERVICE_CLIENT_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_B64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          cat > /tmp/kawa-runtime.env <<EOF2
+          AWS_REGION=${{ vars.AWS_REGION }}
+          ECR_REGISTRY=${ECR_REGISTRY}
+          IMAGE_TAG=${GITHUB_SHA}
+          KAWA_DB_PASSWORD=${KAWA_DB_PASSWORD}
+          KAWA_DB_ROOT_PASSWORD=${KAWA_DB_ROOT_PASSWORD}
+          AZURE_TENANT_ID=${{ vars.AZURE_TENANT_ID }}
+          KAWA_ENTRA_ISSUER_URI=${{ vars.KAWA_ENTRA_ISSUER_URI }}
+          CUSTOMER_SERVICE_CLIENT_ID=${{ vars.CUSTOMER_SERVICE_CLIENT_ID }}
+          CUSTOMER_SERVICE_CLIENT_SECRET=${CUSTOMER_SERVICE_CLIENT_SECRET}
+          WALLET_SERVICE_CLIENT_ID=${{ vars.WALLET_SERVICE_CLIENT_ID }}
+          WALLET_SERVICE_CLIENT_SECRET=${WALLET_SERVICE_CLIENT_SECRET}
+          RETAILER_SERVICE_CLIENT_ID=${{ vars.RETAILER_SERVICE_CLIENT_ID }}
+          RETAILER_SERVICE_CLIENT_SECRET=${RETAILER_SERVICE_CLIENT_SECRET}
+          AZURE_SERVICEBUS_FULLY_QUALIFIED_NAMESPACE=${{ vars.AZURE_SERVICEBUS_FULLY_QUALIFIED_NAMESPACE }}
+          CUSTOMER_SERVICE_TOPIC=${{ vars.CUSTOMER_SERVICE_TOPIC }}
+          CUSTOMER_WALLET_SUBSCRIPTION=${{ vars.CUSTOMER_WALLET_SUBSCRIPTION }}
+          WALLET_SERVICE_TOPIC=${{ vars.WALLET_SERVICE_TOPIC }}
+          WALLET_CUSTOMER_SUBSCRIPTION=${{ vars.WALLET_CUSTOMER_SUBSCRIPTION }}
+          RETAILER_SERVICE_TOPIC=${{ vars.RETAILER_SERVICE_TOPIC }}
+          RETAILER_WALLET_SUBSCRIPTION=${{ vars.RETAILER_WALLET_SUBSCRIPTION }}
+          EOF2
+          sed -i 's/^[[:space:]]*//' /tmp/kawa-runtime.env
+
+          aws ssm put-parameter --name "/kawa/dev/runtime-env" --type SecureString --overwrite --value "$(cat /tmp/kawa-runtime.env)"
+
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_B64" | base64 --decode > /tmp/firebase-service-account.json
+          aws ssm put-parameter --name "/kawa/dev/firebase-service-account" --type SecureString --overwrite --value "$(cat /tmp/firebase-service-account.json)"
+
+          rm -f /tmp/kawa-runtime.env /tmp/firebase-service-account.json
+
+      - name: Deploy to EC2 through SSM
+        shell: bash
+        env:
+          INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          export COMPOSE_B64="$(base64 -w 0 infra/compose.dev.yml)"
+          export DEPLOY_B64="$(base64 -w 0 infra/deploy-dev.sh)"
+
+          python3 - <<'PY'
+          import json, os
+          payload = {
+              "DocumentName": "AWS-RunShellScript",
+              "InstanceIds": [os.environ["INSTANCE_ID"]],
+              "Comment": "Deploy KAWA DEV",
+              "Parameters": {"commands": [
+                  "mkdir -p /opt/kawa/secrets",
+                  f"echo '{os.environ['COMPOSE_B64']}' | base64 -d > /opt/kawa/compose.dev.yml",
+                  f"echo '{os.environ['DEPLOY_B64']}' | base64 -d > /opt/kawa/deploy-dev.sh",
+                  "chmod +x /opt/kawa/deploy-dev.sh",
+                  "KAWA_ENV=dev /opt/kawa/deploy-dev.sh"
+              ]}
+          }
+          with open('/tmp/deploy-command.json','w',encoding='utf-8') as f:
+              json.dump(payload,f)
+          PY
+
+          COMMAND_ID="$(aws ssm send-command --cli-input-json file:///tmp/deploy-command.json --query 'Command.CommandId' --output text)"
+          echo "SSM command: $COMMAND_ID"
+
+          for i in $(seq 1 180); do
+            STATUS="$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --query 'Status' --output text 2>/dev/null || true)"
+            echo "SSM status: $STATUS"
+            case "$STATUS" in
+              Success) break ;;
+              Failed|Cancelled|TimedOut|Cancelling)
+                aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+                exit 1 ;;
+            esac
+            sleep 5
+          done
+
+          FINAL_STATUS="$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --query 'Status' --output text)"
+          [[ "$FINAL_STATUS" == "Success" ]] || { echo "Deployment failed: $FINAL_STATUS"; exit 1; }
+
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,Stdout:StandardOutputContent,Stderr:StandardErrorContent}'
