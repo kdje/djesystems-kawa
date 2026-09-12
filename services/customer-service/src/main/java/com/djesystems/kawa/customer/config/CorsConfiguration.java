@@ -1,7 +1,9 @@
 package com.djesystems.kawa.customer.config;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,14 +15,19 @@ import org.springframework.web.filter.CorsFilter;
 public class CorsConfiguration {
 
     @Bean
-    public FilterRegistrationBean<CorsFilter> corsFilter() {
+    public FilterRegistrationBean<CorsFilter> corsFilter(
+            @Value("${KAWA_CORS_ALLOWED_ORIGINS:http://localhost:5173}")
+            String allowedOrigins) {
 
         org.springframework.web.cors.CorsConfiguration config =
                 new org.springframework.web.cors.CorsConfiguration();
 
-        config.setAllowedOrigins(
-                List.of("http://localhost:5173")
-        );
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+
+        config.setAllowedOrigins(origins);
 
         config.setAllowedMethods(
                 List.of(
@@ -41,20 +48,18 @@ public class CorsConfiguration {
                 )
         );
 
+        config.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
 
-        CorsFilter corsFilter = new CorsFilter(source);
+        FilterRegistrationBean<CorsFilter> bean =
+                new FilterRegistrationBean<>(new CorsFilter(source));
 
-        FilterRegistrationBean<CorsFilter> registration =
-                new FilterRegistrationBean<>(corsFilter);
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
 
-        // Très important :
-        // le CORS doit être traité avant Firebase / Spring Security
-        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
-
-        return registration;
+        return bean;
     }
 }
