@@ -20,7 +20,7 @@ $SUDO dnf update -y
 log "Installing required packages..."
 $SUDO dnf install -y docker nginx certbot python3-certbot-nginx
 
-# Amazon Linux 2023 fournit normalement curl via curl-minimal
+# Amazon Linux 2023 fournit normalement curl via  curl-minimal
 if ! command -v curl >/dev/null 2>&1; then
   $SUDO dnf install -y curl-minimal
 fi
