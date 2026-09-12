@@ -18,7 +18,7 @@ log "Updating Amazon Linux 2023..."
 $SUDO dnf update -y
 
 log "Installing required packages..."
-$SUDO dnf install -y docker nginx certbot python3-certbot-nginx curl
+$SUDO dnf install -y docker nginx certbot python3-certbot-nginx
 
 log "Enabling Docker and Nginx..."
 $SUDO systemctl enable --now docker
