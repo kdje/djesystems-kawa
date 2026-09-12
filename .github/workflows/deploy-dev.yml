@@ -1,6 +1,10 @@
 name: Deploy KAWA DEV
 
 on:
+  push:
+    branches:
+      - develop
+
   workflow_dispatch:
 
 permissions:
