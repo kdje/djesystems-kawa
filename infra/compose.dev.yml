@@ -2,6 +2,26 @@ name: kawa-dev
 
 services:
 
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    container_name: kawa-phpmyadmin
+    restart: unless-stopped
+
+    environment:
+      PMA_ARBITRARY: "1"
+      UPLOAD_LIMIT: 64M
+
+    ports:
+      - "127.0.0.1:8088:80"
+
+    networks:
+      - kawa-net
+
+    depends_on:
+      - customer-db
+      - wallet-db
+      - retailer-db
+
   gateway:
     image: nginx:1.27-alpine
     container_name: kawa-gateway
