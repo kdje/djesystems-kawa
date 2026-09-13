@@ -14,7 +14,25 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         theme_color: '#ffffff',
-        background_color: '#ffffff'
+        background_color: '#ffffff',
+         icons: [
+          {
+            src: '/icons/kawa-192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/kawa-512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/kawa-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
       }
     })
   ]
