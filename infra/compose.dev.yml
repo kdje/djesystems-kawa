@@ -1,6 +1,6 @@
 name: kawa-dev
 
-  services:
+services:
 
   gateway:
     image: nginx:1.27-alpine
@@ -20,7 +20,7 @@ name: kawa-dev
 
     networks:
       - kawa-net
-    
+  
   customer-db:
     image: mysql:8.4
     container_name: kawa-customer-db
