@@ -33,19 +33,28 @@ public class NotificationDeviceService {
                         null
                 );
 
+        String publicKawaId = customer.publicKawaId();
+
+        // Un seul device actif à la fois pour ce client.
+        // Les anciens tokens restent en historique mais deviennent inactifs.
+        repository.findByPublicKawaIdAndActiveTrue(publicKawaId)
+                .forEach(CustomerNotificationDeviceEntity::deactivate);
+
+        // Si le token existe déjà, on le rattache/réactive.
+        // Sinon, on crée une nouvelle ligne active.
         repository.findByFcmToken(fcmToken)
                 .ifPresentOrElse(
 
                     device ->
                         device.bindTo(
-                            customer.publicKawaId(),
+                            publicKawaId,
                             platform
                         ),
 
                     () ->
                         repository.save(
                             new CustomerNotificationDeviceEntity(
-                                customer.publicKawaId(),
+                                publicKawaId,
                                 fcmToken,
                                 platform
                             )
