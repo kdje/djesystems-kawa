@@ -12,7 +12,7 @@ firebase.initializeApp({
   projectId: "kawa-dev-74031",
   storageBucket: "kawa-dev-74031.firebasestorage.app",
   messagingSenderId: "435772282016",
-  appId: "TON_AP1:435772282016:web:adf0523ed239834fbfa5c5P_ID"
+  appId: "1:435772282016:web:adf0523ed239834fbfa5c5"
 });
 
 const messaging = firebase.messaging();
