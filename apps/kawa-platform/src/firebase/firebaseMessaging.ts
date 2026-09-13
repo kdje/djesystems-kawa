@@ -25,11 +25,14 @@ export async function enableFirebaseNotifications(): Promise<string> {
     throw new Error("L'utilisateur n'a pas autorisé les notifications.");
   }
 
-  const serviceWorkerRegistration =
-    await navigator.serviceWorker.register(
-      "/firebase-messaging-sw.js"
-    );
-
+ const serviceWorkerRegistration =
+  await navigator.serviceWorker.register(
+    "/firebase-messaging-sw.js",
+    {
+      scope: "/firebase-cloud-messaging-push-scope/"
+    }
+  );
+  
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
   if (!vapidKey) {
