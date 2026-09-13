@@ -32,7 +32,38 @@ export async function enableFirebaseNotifications(): Promise<string> {
       scope: "/firebase-cloud-messaging-push-scope/"
     }
   );
-  
+
+if (!serviceWorkerRegistration.active) {
+  const worker =
+    serviceWorkerRegistration.installing ??
+    serviceWorkerRegistration.waiting;
+
+  if (worker) {
+    await new Promise<void>((resolve, reject) => {
+      const timeout = window.setTimeout(() => {
+        reject(
+          new Error(
+            "Timeout en attendant l'activation du service worker Firebase."
+          )
+        );
+      }, 10000);
+
+      worker.addEventListener("statechange", () => {
+        if (worker.state === "activated") {
+          window.clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+  }
+}
+
+if (!serviceWorkerRegistration.active) {
+  throw new Error(
+    "Le service worker Firebase n'est pas actif."
+  );
+}
+
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
   if (!vapidKey) {
