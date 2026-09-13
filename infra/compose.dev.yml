@@ -1,6 +1,26 @@
 name: kawa-dev
 
-services:
+  services:
+
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: kawa-gateway
+    restart: unless-stopped
+
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+    ports:
+      - "127.0.0.1:8080:80"
+
+    depends_on:
+      - customer-service
+      - wallet-service
+      - retailer-service
+
+    networks:
+      - kawa-net
+    
   customer-db:
     image: mysql:8.4
     container_name: kawa-customer-db
