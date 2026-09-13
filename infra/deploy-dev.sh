@@ -32,6 +32,11 @@ docker compose --env-file .env -f compose.dev.yml pull
 log "Starting KAWA..."
 docker compose --env-file .env -f compose.dev.yml up -d --remove-orphans
 
+log "Reloading gateway Nginx configuration..."
+
+docker exec kawa-gateway nginx -t
+docker exec kawa-gateway nginx -s reload
+
 wait_http() {
   local name="$1" url="$2" max_attempts="${3:-60}"
   for attempt in $(seq 1 "$max_attempts"); do
