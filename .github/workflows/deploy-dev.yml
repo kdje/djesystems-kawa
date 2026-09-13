@@ -127,6 +127,7 @@ jobs:
           set -euo pipefail
           export COMPOSE_B64="$(base64 -w 0 infra/compose.dev.yml)"
           export DEPLOY_B64="$(base64 -w 0 infra/deploy-dev.sh)"
+          export GATEWAY_B64="$(base64 -w 0 infra/gateway/nginx.conf)"
 
           python3 - <<'PY'
           import json, os
@@ -136,6 +137,8 @@ jobs:
               "Comment": "Deploy KAWA DEV",
               "Parameters": {"commands": [
                   "mkdir -p /opt/kawa/secrets",
+                  "mkdir -p /opt/kawa/gateway",
+                  f"echo '{os.environ['GATEWAY_B64']}' | base64 -d > /opt/kawa/gateway/nginx.conf",
                   f"echo '{os.environ['COMPOSE_B64']}' | base64 -d > /opt/kawa/compose.dev.yml",
                   f"echo '{os.environ['DEPLOY_B64']}' | base64 -d > /opt/kawa/deploy-dev.sh",
                   "chmod +x /opt/kawa/deploy-dev.sh",
