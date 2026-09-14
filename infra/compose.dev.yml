@@ -8,7 +8,9 @@ services:
     restart: unless-stopped
 
     environment:
-      PMA_ARBITRARY: "1"
+      PMA_HOSTS: customer-db,wallet-db,retailer-db
+      PMA_VERBOSES: Customer DB,Wallet DB,Retailer DB
+      PMA_PORTS: 3306,3306,3306
       UPLOAD_LIMIT: 64M
 
     ports:
