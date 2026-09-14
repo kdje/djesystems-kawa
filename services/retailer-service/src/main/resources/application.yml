@@ -21,6 +21,12 @@ spring:
   flyway:
     enabled: true
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KAWA_ENTRA_ISSUER_URI}
+
 management:
   endpoints:
     web:
@@ -28,6 +34,10 @@ management:
         include: health,info
 
 kawa:
+  security:
+    issuer-uri: ${KAWA_ENTRA_ISSUER_URI}
+    audience: ${RETAILER_SERVICE_CLIENT_ID}
+
   azure:
     tenant-id: ${AZURE_TENANT_ID}
     client-id: ${RETAILER_SERVICE_CLIENT_ID}
