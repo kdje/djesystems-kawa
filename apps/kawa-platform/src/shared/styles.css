@@ -1,942 +1,517 @@
-
-/* =========================================================
-   KAWA - AUTHENTICATION
-   ========================================================= */
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background: #f6f7f9;
-  color: #111827;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-/* LOGIN */
-
-.kawa-login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 20px;
-  background:
-    radial-gradient(
-      circle at top,
-      #ffffff 0%,
-      #f5f6f8 45%,
-      #eceff3 100%
-    );
-}
-
-.kawa-login-card {
-  width: 100%;
-  max-width: 430px;
-  background: #ffffff;
-  border-radius: 28px;
-  padding: 42px;
-  box-shadow:
-    0 30px 70px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.kawa-login-brand {
-  text-align: center;
-  margin-bottom: 34px;
-}
-
-.kawa-logo-mark {
-  width: 52px;
-  height: 52px;
-  margin: 0 auto 14px;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #111827;
-  color: white;
-
-  font-size: 25px;
-  font-weight: 800;
-}
-
-.kawa-login-brand h1 {
-  margin: 0;
-  font-size: 32px;
-  letter-spacing: 1px;
-}
-
-.kawa-login-brand p {
-  margin: 12px 0 0;
-  color: #6b7280;
-  line-height: 1.5;
-}
-
-.kawa-login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.kawa-login-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.kawa-login-form input {
-  height: 50px;
-
-  padding: 0 15px;
-
-  border: 1px solid #d8dce3;
-  border-radius: 12px;
-
-  background: #ffffff;
-
-  outline: none;
-
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-
-.kawa-login-form input:focus {
-  border-color: #111827;
-
-  box-shadow:
-    0 0 0 3px rgba(17, 24, 39, 0.08);
-}
-
-.kawa-primary-button {
-  height: 50px;
-  margin-top: 4px;
-
-  border: 0;
-  border-radius: 12px;
-
-  background: #111827;
-  color: white;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.15s,
-    opacity 0.15s;
-}
-
-.kawa-primary-button:hover {
-  transform: translateY(-1px);
-}
-
-.kawa-primary-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.kawa-login-separator {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-
-  margin: 27px 0;
-
-  color: #9ca3af;
-  font-size: 13px;
-}
-
-.kawa-login-separator::before,
-.kawa-login-separator::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: #e5e7eb;
-}
-
-.kawa-google-button {
-  width: 100%;
-  height: 50px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-
-  background: #ffffff;
-
-  border: 1px solid #d8dce3;
-  border-radius: 12px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s,
-    transform 0.15s;
-}
-
-.kawa-google-button:hover {
-  background: #f9fafb;
-  transform: translateY(-1px);
-}
-
-.google-g {
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.kawa-login-error {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-
-  color: #be123c;
-
-  border-radius: 10px;
-
-  padding: 11px 13px;
-
-  font-size: 13px;
-}
-
-
-/* =========================================================
-   CONNECTED APPLICATION
-   ========================================================= */
-
-.kawa-app-shell {
-  min-height: 100vh;
-  background: #f6f7f9;
-}
-
-.kawa-topbar {
-  height: 72px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 32px;
-
-  background: rgba(255, 255, 255, 0.94);
-
-  border-bottom: 1px solid #e8eaee;
-
-  position: sticky;
-  top: 0;
-  z-index: 100;
-
-  backdrop-filter: blur(12px);
-}
-
-.kawa-topbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-}
-
-.kawa-mini-logo {
-  width: 36px;
-  height: 36px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px;
-
-  background: #111827;
-  color: white;
-
-  font-size: 18px;
-  font-weight: 800;
-}
-
-
-/* USER AVATAR */
-
-.kawa-user-menu {
-  position: relative;
-}
-
-.kawa-avatar {
-  width: 42px;
-  height: 42px;
-
-  border: 0;
-  border-radius: 50%;
-
-  background: #111827;
-  color: #ffffff;
-
-  font-weight: 700;
-  font-size: 14px;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.14);
-
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
-}
-
-.kawa-avatar:hover {
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.18);
-}
-
-
-/* DROPDOWN */
-
-.kawa-user-dropdown {
-  position: absolute;
-
-  right: 0;
-  top: 52px;
-
-  width: 245px;
-
-  background: white;
-
-  border: 1px solid #e5e7eb;
-  border-radius: 15px;
-
-  box-shadow:
-    0 20px 45px rgba(0, 0, 0, 0.14);
-
-  padding: 8px;
-
-  z-index: 200;
-}
-
-.kawa-user-information {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-
-  padding: 12px 12px 10px;
-}
-
-.kawa-user-information strong {
-  font-size: 14px;
-}
-
-.kawa-user-information span {
-  color: #6b7280;
-  font-size: 12px;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.kawa-dropdown-divider {
-  height: 1px;
-  background: #eceef1;
-
-  margin: 5px 0;
-}
-
-.kawa-logout-menu-item {
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-  gap: 11px;
-
-  padding: 11px 12px;
-
-  border: 0;
-  border-radius: 9px;
-
-  background: transparent;
-
-  text-align: left;
-
-  cursor: pointer;
-
-  color: #374151;
-
-  font-weight: 500;
-}
-
-.kawa-logout-menu-item:hover {
-  background: #f4f5f7;
-}
-
-
-/* DASHBOARD */
-
-/*.kawa-dashboard {
-  min-height: calc(100vh - 72px);
-
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-
-  padding: 45px 20px;
-}*/
-
-.kawa-dashboard {
-  min-height: calc(100dvh - 72px);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  padding: 24px 20px;
-}
-
-.kawa-loading {
-  padding: 50px;
-
-  text-align: center;
-
-  color: #6b7280;
-}
-
-.kawa-dashboard-error {
-  max-width: 500px;
-
-  margin: 30px auto;
-
-  padding: 16px;
-
-  background: #fff1f2;
-
-  color: #be123c;
-
-  border: 1px solid #fecdd3;
-  border-radius: 12px;
-}
-
-
-/* MOBILE */
-
-@media (max-width: 600px) {
-
-  .kawa-login-card {
-    padding: 30px 22px;
-    border-radius: 22px;
-  }
-
-  .kawa-topbar {
-    padding: 0 18px;
-  }
-
-  .kawa-dashboard {
-    padding: 25px 12px;
-  }
-}
-
-
 :root {
-    font-family: system-ui, sans-serif
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #14211c;
+  background: #f4f6f3;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --kawa-green: #1f6b51;
+  --kawa-green-dark: #15523e;
+  --kawa-green-soft: #eaf3ef;
+  --kawa-bg: #f4f6f3;
+  --kawa-surface: #ffffff;
+  --kawa-text: #14211c;
+  --kawa-muted: #6c7872;
+  --kawa-border: #e2e8e4;
+  --kawa-danger: #a63e48;
+  --kawa-shadow: 0 16px 45px rgba(28, 52, 42, 0.08);
 }
 
-body {
-    margin: 0;
-    background: #f6f7f9
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--kawa-bg); }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--kawa-bg); color: var(--kawa-text); }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-decoration: none; }
+
+.kawa-splash {
+  min-height: 100vh; display: grid; place-items: center; align-content: center; gap: 18px;
+  background: radial-gradient(circle at 50% 0%, #fff 0, #f4f7f4 44%, #edf1ee 100%);
+  color: var(--kawa-muted); font-weight: 600;
 }
 
-.page {
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 1rem
+/* Login */
+.kawa-login-page {
+  min-height: 100vh; display: grid; place-items: center; padding: 28px 18px;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(31,107,81,.12), transparent 30%),
+    radial-gradient(circle at 85% 10%, rgba(207,224,215,.62), transparent 24%),
+    linear-gradient(135deg, #f8faf8, #eef3ef);
 }
-
-
-.card {
-    width: min(100%, 32rem);
-    background: white;
-    border-radius: 1rem;
-    padding: 2rem;
-    box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .08);
-    text-align: center
+.kawa-login-card {
+  width: min(440px, 100%); padding: 40px; border-radius: 28px; background: rgba(255,255,255,.96);
+  border: 1px solid rgba(213,224,218,.9); box-shadow: 0 26px 80px rgba(28, 52, 42, .13);
 }
-
-code {
-    display: block;
-    margin-top: 1rem;
-    word-break: break-all
-}
-
-.note {
-    font-size: .9rem;
-    opacity: .7
-}
-
-.kawa-qr-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 18px 0 20px;
-}
-
-.kawa-qr-wrapper svg {
-  display: block;
-}
-
-.kawa-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: #ecfdf3;
-  color: #15803d;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.kawa-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
-}
-.kawa-mini-logo,
+.kawa-login-brand { text-align: center; margin-bottom: 30px; }
 .kawa-logo-mark {
-  background: linear-gradient(135deg, #111827, #2563eb);
-  color: #fff;
+  width: 56px; height: 56px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 17px; background: linear-gradient(145deg, var(--kawa-green), var(--kawa-green-dark));
+  color: #fff; font-size: 26px; font-weight: 850; box-shadow: 0 10px 24px rgba(31,107,81,.22);
 }
-
-.kawa-primary-button {
-  background: #2563eb;
-  color: white;
+.kawa-login-brand h1 { margin: 16px 0 6px; font-size: 31px; letter-spacing: .08em; }
+.kawa-login-brand p { margin: 0; color: var(--kawa-muted); line-height: 1.55; }
+.kawa-login-form { display: grid; gap: 18px; }
+.kawa-login-form label { display: grid; gap: 8px; font-size: 13px; font-weight: 750; color: #34443d; }
+.kawa-login-form input {
+  height: 50px; border-radius: 13px; border: 1px solid #d8e0dc; padding: 0 15px; background: #fff; outline: none;
+  transition: .2s ease;
 }
-
-.kawa-primary-button:hover {
-  background: #1d4ed8;
+.kawa-login-form input:focus { border-color: var(--kawa-green); box-shadow: 0 0 0 4px rgba(31,107,81,.09); }
+.kawa-primary-button, .kawa-primary-action {
+  min-height: 44px; border: 0; border-radius: 12px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; background: var(--kawa-green); color: #fff; font-weight: 800; cursor: pointer; box-shadow: 0 8px 20px rgba(31,107,81,.16);
 }
-
-
-.kawa-topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.kawa-primary-button { height: 50px; }
+.kawa-primary-button:hover, .kawa-primary-action:hover { background: var(--kawa-green-dark); }
+.kawa-primary-button:disabled, .kawa-primary-action:disabled { opacity: .6; cursor: wait; }
+.kawa-login-separator { margin: 24px 0; display: flex; align-items: center; gap: 12px; color: #96a09b; font-size: 12px; }
+.kawa-login-separator::before, .kawa-login-separator::after { content: ""; height: 1px; background: #e3e8e5; flex: 1; }
+.kawa-google-button {
+  width: 100%; height: 50px; display: flex; align-items: center; justify-content: center; gap: 11px;
+  background: #fff; border: 1px solid #d8e0dc; border-radius: 13px; font-weight: 750; cursor: pointer;
 }
+.kawa-google-button:hover { background: #f8faf9; }
+.google-g { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #f3f4f6; font-weight: 900; }
+.kawa-login-error, .kawa-state-error { border: 1px solid #f0c6cb !important; background: #fff3f4 !important; color: #8d2f39 !important; }
 
-.kawa-notification-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 8px 12px;
-
-  border: 1px solid #d9e2f2;
-  border-radius: 10px;
-
-  background: #f1f5ff;
-  color: #173b8f;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
+/* App shell */
+.kawa-app-shell { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0,1fr); }
+.kawa-sidebar {
+  position: fixed; inset: 0 auto 0 0; width: 260px; padding: 26px 18px 20px; display: flex; flex-direction: column;
+  background: #fbfcfb; border-right: 1px solid var(--kawa-border); z-index: 50;
 }
-
-.kawa-notification-button:hover {
-  background: #e5edff;
-  border-color: #b9c9eb;
+.kawa-brand-lockup { display: flex; align-items: center; gap: 12px; padding: 0 9px 26px; }
+.kawa-logo-mark-small { width: 42px; height: 42px; border-radius: 13px; font-size: 19px; flex: 0 0 auto; }
+.kawa-brand-name { font-weight: 900; letter-spacing: .11em; font-size: 18px; }
+.kawa-brand-caption { margin-top: 2px; font-size: 11px; color: var(--kawa-muted); }
+.kawa-sidebar-nav { display: grid; gap: 5px; }
+.kawa-nav-link {
+  min-height: 46px; padding: 0 13px; border-radius: 12px; display: flex; align-items: center; gap: 12px;
+  color: #64716b; font-size: 14px; font-weight: 700; transition: .18s ease;
 }
-
+.kawa-nav-link:hover { background: #f0f4f1; color: #2f433a; }
+.kawa-nav-link-active { background: var(--kawa-green-soft); color: var(--kawa-green-dark); }
+.kawa-sidebar-footer { margin-top: auto; padding: 18px 6px 2px; }
+.kawa-security-note { display: flex; gap: 10px; padding: 13px; border-radius: 14px; background: #f1f6f3; color: var(--kawa-green-dark); }
+.kawa-security-note strong { display: block; font-size: 12px; }
+.kawa-security-note span { display: block; margin-top: 3px; color: #71817a; font-size: 10px; line-height: 1.45; }
+.kawa-main-column { grid-column: 2; min-width: 0; }
 .kawa-topbar {
-  width: 100%;
-  min-height: 64px;
+  height: 72px; position: sticky; top: 0; z-index: 40; display: flex; justify-content: flex-end; align-items: center;
+  padding: 0 32px; border-bottom: 1px solid rgba(226,232,228,.9); background: rgba(248,250,248,.88); backdrop-filter: blur(14px);
+}
+.kawa-mobile-brand { display: none; }
+.kawa-topbar-actions { display: flex; align-items: center; gap: 10px; }
+.kawa-icon-button {
+  width: 40px; height: 40px; border-radius: 12px; border: 1px solid #dfe6e2; background: #fff; color: #46554e;
+  display: grid; place-items: center; cursor: pointer;
+}
+.kawa-icon-button:hover { background: #f2f6f3; color: var(--kawa-green-dark); }
+.kawa-user-menu { position: relative; }
+.kawa-avatar {
+  width: 42px; height: 42px; border: 0; border-radius: 50%; background: #183e31; color: #fff; font-weight: 850; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(24,62,49,.16);
+}
+.kawa-user-dropdown {
+  position: absolute; top: 50px; right: 0; width: 245px; padding: 8px; border: 1px solid var(--kawa-border); border-radius: 16px;
+  background: #fff; box-shadow: var(--kawa-shadow); z-index: 100;
+}
+.kawa-user-information { padding: 12px; display: grid; gap: 4px; }
+.kawa-user-information strong { font-size: 13px; }
+.kawa-user-information span { font-size: 12px; color: var(--kawa-muted); overflow-wrap: anywhere; }
+.kawa-dropdown-divider { height: 1px; background: #edf0ee; margin: 2px 0 6px; }
+.kawa-logout-menu-item {
+  width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: #8c3841;
+  display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 750; cursor: pointer;
+}
+.kawa-logout-menu-item:hover { background: #fff3f4; }
+.kawa-main-content { padding: 32px; }
+.kawa-bottom-nav { display: none; }
 
+/* Pages */
+.kawa-page { width: min(1180px, 100%); margin: 0 auto; }
+.kawa-page-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; margin: 2px 0 26px; }
+.kawa-eyebrow { display: block; margin-bottom: 7px; color: var(--kawa-green); font-size: 11px; font-weight: 850; text-transform: uppercase; letter-spacing: .13em; }
+.kawa-eyebrow-light { color: #cbe5d7; }
+.kawa-page-heading h1 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; letter-spacing: -.035em; }
+.kawa-page-heading p { margin: 9px 0 0; color: var(--kawa-muted); font-size: 15px; line-height: 1.55; }
+.kawa-state-card { padding: 22px; border: 1px solid var(--kawa-border); border-radius: 16px; background: #fff; color: var(--kawa-muted); }
+
+/* Hero identity card */
+.kawa-identity-card {
+  position: relative; overflow: hidden; min-height: 390px; border-radius: 30px; padding: 28px 30px 30px;
+  background: linear-gradient(135deg, #173e30 0%, #1f6b51 55%, #2f8065 100%); color: #fff;
+  box-shadow: 0 24px 70px rgba(23,62,48,.20);
+}
+.kawa-card-glow { position: absolute; width: 480px; height: 480px; right: -150px; top: -220px; border-radius: 50%; background: rgba(255,255,255,.08); }
+.kawa-card-header { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 18px; z-index: 1; }
+.kawa-card-brand { display: flex; align-items: center; gap: 9px; font-weight: 900; letter-spacing: .09em; }
+.kawa-card-logo { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18); }
+.kawa-status-pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 7px 11px; background: rgba(255,255,255,.10); font-size: 11px; font-weight: 800; }
+.kawa-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #91e3b7; box-shadow: 0 0 0 3px rgba(145,227,183,.12); }
+.kawa-card-body { position: relative; z-index: 1; display: grid; grid-template-columns: 220px minmax(0,1fr); align-items: center; gap: clamp(28px,5vw,70px); margin-top: 34px; }
+.kawa-qr-panel { width: 220px; height: 220px; display: grid; place-items: center; border-radius: 24px; background: #fff; box-shadow: 0 16px 35px rgba(8,37,27,.18); }
+.kawa-card-copy h2 { margin: 0; max-width: 550px; font-size: clamp(31px,4vw,51px); line-height: 1.04; letter-spacing: -.045em; }
+.kawa-card-copy p { max-width: 560px; margin: 17px 0 22px; color: #dcebe4; line-height: 1.58; font-size: 14px; }
+.kawa-id-block { max-width: 470px; min-height: 66px; padding: 12px 14px 12px 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 15px; background: rgba(10,49,35,.23); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.kawa-id-block span { display: block; font-size: 10px; letter-spacing: .12em; color: #bdd8cb; font-weight: 800; }
+.kawa-id-block strong { display: block; margin-top: 4px; font-size: 13px; letter-spacing: .02em; }
+.kawa-verified-badge { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: #e9f8ef; color: var(--kawa-green-dark); }
+
+/* Panels */
+.kawa-dashboard-grid { margin-top: 22px; display: grid; grid-template-columns: minmax(0,1.35fr) minmax(280px,.65fr); gap: 22px; }
+.kawa-panel { border: 1px solid var(--kawa-border); border-radius: 22px; padding: 22px; background: var(--kawa-surface); box-shadow: 0 8px 28px rgba(29,55,44,.04); }
+.kawa-panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.kawa-panel-header h2, .kawa-large-empty-panel h2 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+.kawa-text-link { display: inline-flex; align-items: center; gap: 5px; color: var(--kawa-green); font-size: 12px; font-weight: 800; }
+.kawa-empty-state { padding: 18px; border-radius: 16px; background: #f6f8f6; color: var(--kawa-muted); }
+.kawa-empty-state-horizontal { display: flex; align-items: center; gap: 14px; }
+.kawa-empty-state strong { display: block; color: #314039; font-size: 13px; }
+.kawa-empty-state p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; }
+.kawa-empty-icon { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 13px; background: var(--kawa-green-soft); color: var(--kawa-green); }
+.kawa-trust-row { display: flex; gap: 13px; align-items: flex-start; }
+.kawa-trust-icon { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 13px; color: var(--kawa-green); background: var(--kawa-green-soft); }
+.kawa-trust-row p { margin: 2px 0 0; color: var(--kawa-muted); line-height: 1.58; font-size: 13px; }
+.kawa-large-empty-panel { min-height: 330px; display: grid; place-items: center; align-content: center; text-align: center; padding: 48px; }
+.kawa-large-empty-panel p { max-width: 620px; margin: 10px auto 0; color: var(--kawa-muted); line-height: 1.6; }
+.kawa-empty-icon-large { width: 62px; height: 62px; margin-bottom: 18px; border-radius: 18px; }
+.kawa-profile-panel { padding: 0; overflow: hidden; }
+.kawa-profile-row { min-height: 64px; padding: 16px 20px; display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 18px; align-items: center; border-bottom: 1px solid #eef1ef; }
+.kawa-profile-row:last-child { border-bottom: 0; }
+.kawa-profile-row span { color: var(--kawa-muted); font-size: 13px; }
+.kawa-profile-row strong { font-size: 13px; overflow-wrap: anywhere; }
+.kawa-profile-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Consent modal */
+.kawa-consent-modal-backdrop { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: 18px; background: rgba(12,25,19,.48); backdrop-filter: blur(5px); }
+.kawa-consent-modal { width: min(470px,100%); padding: 28px; border-radius: 24px; background: #fff; box-shadow: 0 35px 90px rgba(10,29,21,.28); }
+.kawa-modal-icon { width: 46px; height: 46px; margin-bottom: 18px; display: grid; place-items: center; border-radius: 14px; background: var(--kawa-green); color: #fff; font-weight: 900; }
+.kawa-consent-modal h2 { margin: 0; font-size: 25px; letter-spacing: -.025em; }
+.kawa-consent-modal p { margin: 12px 0 0; color: var(--kawa-muted); line-height: 1.6; }
+.kawa-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.kawa-secondary-action { min-height: 44px; padding: 0 17px; border: 1px solid #d9e1dd; border-radius: 12px; background: #fff; color: #3f4c46; font-weight: 800; cursor: pointer; }
+.kawa-secondary-action:hover { background: #f5f7f5; }
+
+@media (max-width: 980px) {
+  .kawa-app-shell { display: block; }
+  .kawa-sidebar { display: none; }
+  .kawa-main-column { width: 100%; }
+  .kawa-topbar { height: 64px; padding: 0 18px; justify-content: space-between; }
+  .kawa-mobile-brand { display: flex; align-items: center; gap: 9px; letter-spacing: .08em; }
+  .kawa-logo-mark-mobile { width: 34px; height: 34px; border-radius: 10px; font-size: 16px; box-shadow: none; }
+  .kawa-main-content { padding: 24px 18px 96px; }
+  .kawa-bottom-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; height: 72px; display: grid; grid-template-columns: repeat(4,1fr);
+    padding: 6px max(8px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)); background: rgba(255,255,255,.96);
+    border-top: 1px solid var(--kawa-border); backdrop-filter: blur(14px);
+  }
+  .kawa-bottom-link { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #87918c; font-size: 10px; font-weight: 750; }
+  .kawa-bottom-link-active { color: var(--kawa-green); }
+  .kawa-dashboard-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .kawa-main-content { padding: 20px 14px 90px; }
+  .kawa-page-heading { align-items: flex-start; flex-direction: column; margin-bottom: 20px; }
+  .kawa-page-heading h1 { font-size: 31px; }
+  .kawa-page-heading p { font-size: 13px; }
+  .kawa-identity-card { min-height: auto; border-radius: 24px; padding: 22px 20px 24px; }
+  .kawa-card-body { grid-template-columns: 1fr; gap: 24px; margin-top: 26px; }
+  .kawa-qr-panel { width: 190px; height: 190px; margin: 0 auto; border-radius: 20px; }
+  .kawa-qr-panel svg { width: 150px; height: 150px; }
+  .kawa-card-copy { text-align: center; }
+  .kawa-card-copy h2 { font-size: 32px; }
+  .kawa-card-copy p { margin-left: auto; margin-right: auto; }
+  .kawa-id-block { margin: 0 auto; text-align: left; }
+  .kawa-panel { border-radius: 18px; padding: 18px; }
+  .kawa-empty-state-horizontal { align-items: flex-start; }
+  .kawa-large-empty-panel { min-height: 300px; padding: 32px 20px; }
+  .kawa-profile-row { grid-template-columns: 1fr; gap: 5px; }
+  .kawa-login-card { padding: 30px 22px; border-radius: 24px; }
+}
+
+/* ------------------------------------------------------------
+   KAWA V2 - Dashboard & retailers experience
+   ------------------------------------------------------------ */
+.kawa-home-hero {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-
-  padding: 0 20px;
-  box-sizing: border-box;
+  gap: 24px;
+  margin: 2px 0 28px;
 }
-
-.kawa-topbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  flex-shrink: 0;
+.kawa-home-hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 46px);
+  line-height: 1.05;
+  letter-spacing: -.045em;
 }
-
-.kawa-topbar-actions {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: flex-end;
-
-  gap: 10px;
-  flex-wrap: nowrap !important;
-
-  margin-left: auto;
+.kawa-home-hero p {
+  max-width: 650px;
+  margin: 10px 0 0;
+  color: var(--kawa-muted);
+  font-size: 15px;
+  line-height: 1.6;
 }
+.kawa-hero-action { flex: 0 0 auto; }
 
-.kawa-notification-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  height: 38px;
-  padding: 0 12px;
-
-  border: 1px solid #d9e1ef;
-  border-radius: 10px;
-
-  background: #f5f7fc;
-  color: #172033;
-
-  font-family: inherit;
+.kawa-dashboard-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, .65fr);
+  gap: 22px;
+  align-items: stretch;
+}
+.kawa-identity-card-compact {
+  min-height: 290px;
+  padding: 24px 26px 26px;
+  border-radius: 26px;
+}
+.kawa-identity-card-compact .kawa-card-body {
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 34px;
+  margin-top: 24px;
+}
+.kawa-identity-card-compact .kawa-qr-panel {
+  width: 150px;
+  height: 150px;
+  border-radius: 20px;
+}
+.kawa-identity-card-compact .kawa-card-copy h2 {
+  font-size: clamp(28px, 3vw, 39px);
+}
+.kawa-identity-card-compact .kawa-card-copy p {
+  margin: 12px 0 16px;
   font-size: 13px;
-  font-weight: 600;
-
-  cursor: pointer;
-  white-space: nowrap;
-
-  flex-shrink: 0;
+}
+.kawa-identity-card-compact .kawa-id-block {
+  min-height: 58px;
 }
 
-.kawa-notification-button:hover {
-  background: #eaf0fb;
+.kawa-overview-stack {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
 }
-
-
-/* =========================================================
-   KAWA - IN APP NOTIFICATION TOAST
-   ========================================================= */
-
-.kawa-toast {
-  position: fixed;
-
-  top: 88px;
-  right: 24px;
-
-  width: min(420px, calc(100vw - 48px));
-
-  display: flex;
-  align-items: flex-start;
-  gap: 13px;
-
-  padding: 16px 16px;
-
-  background: #ffffff;
-
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-
-  box-shadow:
-    0 18px 45px rgba(15, 23, 42, 0.14);
-
-  z-index: 300;
-
-  animation: kawa-toast-enter 0.22s ease-out;
+.kawa-overview-card {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--kawa-border);
+  border-radius: 21px;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 8px 28px rgba(29,55,44,.045);
 }
-
-
-.kawa-toast-icon {
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 12px;
-
-  background: #eef4ff;
-
-  font-size: 18px;
+.kawa-overview-card-primary {
+  background: linear-gradient(145deg, #fff, #f4f8f5);
 }
-
-
-.kawa-toast-content {
-  flex: 1;
-  min-width: 0;
+.kawa-overview-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--kawa-green-soft);
+  color: var(--kawa-green);
 }
-
-
-.kawa-toast-title {
-  margin-bottom: 5px;
-
-  color: #111827;
-
-  font-size: 14px;
-  font-weight: 700;
-
-  line-height: 1.3;
+.kawa-overview-card span {
+  display: block;
+  color: var(--kawa-muted);
+  font-size: 11px;
+  font-weight: 750;
 }
-
-
-.kawa-toast-body {
-  color: #4b5563;
-
-  font-size: 13px;
+.kawa-overview-card strong {
+  display: block;
+  margin-top: 4px;
+  color: #24352e;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.kawa-overview-card p {
+  margin: 6px 0 0;
+  color: var(--kawa-muted);
+  font-size: 12px;
   line-height: 1.5;
-
-  overflow-wrap: anywhere;
 }
 
-
-.kawa-toast-close {
-  width: 28px;
-  height: 28px;
-
+.kawa-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 34px 0 16px;
+}
+.kawa-section-heading h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -.03em;
+}
+.kawa-home-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+  gap: 22px;
+}
+.kawa-empty-state-premium {
+  min-height: 155px;
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  padding: 0;
-
-  border: 0;
-  border-radius: 8px;
-
-  background: transparent;
-
-  color: #6b7280;
-
-  font-size: 22px;
-  line-height: 1;
-
-  cursor: pointer;
+  gap: 16px;
+  padding: 22px;
+  background: linear-gradient(145deg, #f8faf8, #f2f6f3);
+  border: 1px dashed #dce6e1;
 }
-
-
-.kawa-toast-close:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-
-@keyframes kawa-toast-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-
-.kawa-toast-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  margin-top: 14px;
-}
-
-.kawa-consent-button {
-  height: 36px;
-
+.kawa-inline-cta {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
+  margin-top: 11px;
+  color: var(--kawa-green);
+  font-size: 12px;
+  font-weight: 850;
+}
+.kawa-activity-list { display: grid; gap: 4px; }
+.kawa-activity-item {
+  display: grid;
+  grid-template-columns: 12px minmax(0,1fr);
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid #edf1ef;
+}
+.kawa-activity-item:last-child { border-bottom: 0; }
+.kawa-activity-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #3da878;
+  box-shadow: 0 0 0 4px #e8f5ef;
+}
+.kawa-activity-dot-soft { background: #8ca49a; box-shadow: 0 0 0 4px #f0f3f1; }
+.kawa-activity-item strong { display: block; font-size: 13px; }
+.kawa-activity-item span { display: block; margin-top: 4px; color: var(--kawa-muted); font-size: 12px; line-height: 1.45; }
+
+.kawa-retailer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.kawa-summary-tile {
+  min-height: 108px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 19px 20px;
+  border: 1px solid var(--kawa-border);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 7px 24px rgba(29,55,44,.035);
+}
+.kawa-summary-tile-icon {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--kawa-green);
+  background: var(--kawa-green-soft);
+}
+.kawa-summary-tile span { display: block; color: var(--kawa-muted); font-size: 11px; font-weight: 750; }
+.kawa-summary-tile strong { display: block; margin-top: 4px; font-size: 20px; letter-spacing: -.02em; }
+.kawa-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: #f1f5f2;
+  color: #52615a;
+  font-size: 11px;
+  font-weight: 800;
+}
+.kawa-retailer-list-panel { min-height: 360px; }
+.kawa-retailer-empty {
+  min-height: 245px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  padding: 24px;
+}
+.kawa-retailer-empty-visual {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  margin-bottom: 18px;
+}
+.kawa-retailer-store-icon,
+.kawa-retailer-kawa-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+}
+.kawa-retailer-store-icon { background: #f1f5f2; color: #5c6f65; }
+.kawa-retailer-kawa-icon { background: var(--kawa-green); color: #fff; font-size: 21px; font-weight: 900; }
+.kawa-retailer-connector { width: 44px; height: 2px; background: repeating-linear-gradient(90deg, #cbd9d2 0 5px, transparent 5px 9px); }
+.kawa-retailer-empty h3 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+.kawa-retailer-empty p { max-width: 520px; margin: 9px auto 0; color: var(--kawa-muted); font-size: 13px; line-height: 1.6; }
+.kawa-how-it-works { margin-top: 30px; }
+.kawa-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 16px;
+}
+.kawa-step-card {
+  position: relative;
+  min-height: 210px;
+  padding: 22px;
+  border: 1px solid var(--kawa-border);
+  border-radius: 21px;
+  background: #fff;
+  overflow: hidden;
+}
+.kawa-step-number {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  color: #edf2ef;
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+}
+.kawa-step-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 25px;
+  border-radius: 13px;
+  background: var(--kawa-green-soft);
+  color: var(--kawa-green);
+}
+.kawa-step-card h3 { margin: 0; font-size: 15px; }
+.kawa-step-card p { margin: 8px 0 0; color: var(--kawa-muted); font-size: 12px; line-height: 1.55; }
 
-  padding: 0 16px;
-
-  border-radius: 9px;
-
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease;
+@media (max-width: 1050px) {
+  .kawa-dashboard-hero-grid { grid-template-columns: 1fr; }
+  .kawa-overview-stack { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+  .kawa-home-content-grid { grid-template-columns: 1fr; }
 }
 
-.kawa-consent-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.kawa-consent-button:disabled {
-  opacity: 0.55;
-  cursor: wait;
-}
-
-.kawa-consent-accept {
-  border: 1px solid #2563eb;
-
-  background: #2563eb;
-  color: #ffffff;
-}
-
-.kawa-consent-accept:hover:not(:disabled) {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-}
-
-.kawa-consent-reject {
-  border: 1px solid #d1d5db;
-
-  background: #ffffff;
-  color: #374151;
-}
-
-.kawa-consent-reject:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-}
-
-@media (max-width: 600px) {
-  .kawa-toast-actions {
-    width: 100%;
-  }
-
-  .kawa-consent-button {
-    flex: 1;
-  }
-}
-
-
-@media (max-width: 600px) {
-
-  .kawa-toast {
-    top: 76px;
-
-    left: 12px;
-    right: 12px;
-
-    width: auto;
-
-    padding: 14px;
-  }
-
-}
-
-@media (max-width: 600px) {
-
-  .kawa-dashboard {
-    min-height: calc(100dvh - 64px);
-    padding: 14px 12px 18px;
-
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-  }
-
-  .card {
-    width: 100%;
-    max-width: 100%;
-    min-height: calc(100dvh - 64px - 32px);
-
-    padding: 28px 18px;
-    margin: 0;
-    border-radius: 18px;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .card svg {
-    max-width: 100%;
-    height: auto;
-  }
-
-  .card code {
-    display: block;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    font-size: 12px;
-  }
-
-  .card h1 {
-    font-size: 30px;
-    margin-bottom: 14px;
-  }
-
-  .card p {
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-
-  .kawa-qr-wrapper {
-    margin: 16px 0 18px;
-  }
-
-  .kawa-qr-wrapper svg {
-    max-width: 100%;
-    height: auto;
-  }
-
-  .kawa-topbar {
-    padding: 0 16px;
-  }
-
-  .kawa-notification-button {
-    width: 38px;
-    height: 38px;
-
-    padding: 0;
-
-    border-radius: 50%;
-  }
-
-  .kawa-notification-label {
-    display: none;
-  }
-
-  .kawa-notification-icon {
-    font-size: 17px;
-  }
-}
-
-@media (max-width: 480px) {
-  .kawa-notification-button {
-    width: 36px;
-    height: 36px;
-
-    padding: 0;
-
-    font-size: 0;
-
-    border-radius: 50%;
-  }
-
-
+@media (max-width: 720px) {
+  .kawa-home-hero { align-items: flex-start; flex-direction: column; margin-bottom: 20px; }
+  .kawa-home-hero h1 { font-size: 34px; }
+  .kawa-hero-action { width: 100%; justify-content: center; }
+  .kawa-overview-stack { grid-template-columns: 1fr; }
+  .kawa-identity-card-compact { padding: 21px 18px 23px; }
+  .kawa-identity-card-compact .kawa-card-body { grid-template-columns: 1fr; gap: 21px; }
+  .kawa-identity-card-compact .kawa-qr-panel { width: 170px; height: 170px; }
+  .kawa-identity-card-compact .kawa-card-copy h2 { font-size: 30px; }
+  .kawa-retailer-summary-grid { grid-template-columns: 1fr; }
+  .kawa-summary-tile { min-height: 88px; }
+  .kawa-steps-grid { grid-template-columns: 1fr; }
+  .kawa-step-card { min-height: 175px; }
+  .kawa-section-heading { margin-top: 28px; }
 }

@@ -60,9 +60,9 @@ export function LoginForm() {
           <h1>KAWA</h1>
 
           <p>
-            One identity.
+            Une identité.
             <br />
-            All your loyalty cards.
+            Toutes vos cartes de fidélité.
           </p>
         </div>
 
