@@ -1,45 +1,57 @@
 import { QRCodeSVG } from "qrcode.react";
+import { AppIcon } from "./AppIcon";
 
 type KawaIdentityCardProps = {
   publicKawaId: string;
   status?: string;
+  compact?: boolean;
 };
 
-export function KawaIdentityCard({
-  publicKawaId,
-  status,
-}: KawaIdentityCardProps) {
+function shortId(value: string) {
+  if (value.length <= 18) return value;
+  return `${value.slice(0, 8)}…${value.slice(-8)}`;
+}
+
+export function KawaIdentityCard({ publicKawaId, status, compact = false }: KawaIdentityCardProps) {
   const qrValue = `KAWA:1:${publicKawaId}`;
 
   return (
-    <section className="card">
-      <h1>KAWA</h1>
-
-      <p>One identity. All your loyalty cards.</p>
-
-      <div className="kawa-qr-wrapper">
-        <QRCodeSVG
-          value={qrValue}
-          size={220}
-          level="M"
-        />
+    <section className={`kawa-identity-card${compact ? " kawa-identity-card-compact" : ""}`}>
+      <div className="kawa-card-glow" />
+      <div className="kawa-card-header">
+        <div className="kawa-card-brand">
+          <span className="kawa-card-logo">K</span>
+          <span>KAWA</span>
+        </div>
+        {status && (
+          <span className={`kawa-status-pill kawa-status-${status.toLowerCase()}`}>
+            <span className="kawa-status-dot" />
+            {status === "ACTIVE" ? "Actif" : status}
+          </span>
+        )}
       </div>
-      <p>
-        <strong>KAWA ID</strong>
-      </p>
 
-      <code>{publicKawaId}</code>
+      <div className="kawa-card-body">
+        <div className="kawa-qr-panel">
+          <QRCodeSVG value={qrValue} size={compact ? 144 : 176} level="M" />
+        </div>
 
-      <p className="note">
-        Permanent QR: not transaction-specific and not retailer-specific.
-      </p>
+        <div className="kawa-card-copy">
+          <span className="kawa-eyebrow kawa-eyebrow-light">Votre identifiant universel</span>
+          <h2>Une seule identité.<br />Toutes vos cartes.</h2>
+          <p>Présentez ce QR code chez une enseigne partenaire pour retrouver votre fidélité sans chercher une carte.</p>
 
-      {status && (
-        <span className="kawa-status">
-          <span className="kawa-status-dot" />
-          Status: <strong>{status}</strong>
-        </span>
-      )}
+          <div className="kawa-id-block">
+            <div>
+              <span>KAWA ID</span>
+              <strong title={publicKawaId}>{shortId(publicKawaId)}</strong>
+            </div>
+            <div className="kawa-verified-badge" title="Identité KAWA active">
+              <AppIcon name="check" size={15} />
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
