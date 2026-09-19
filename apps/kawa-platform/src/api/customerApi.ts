@@ -1,6 +1,7 @@
 import type { User } from "firebase/auth";
 import { getFirebaseIdToken } from "../auth/authService";
 import type { Customer, KawaIdResponse } from "../types/Customer";
+import { Capacitor } from "@capacitor/core";
 
 const BASE_URL =
   import.meta.env.VITE_CUSTOMER_API_BASE_URL ?? "http://localhost:8081";
@@ -45,6 +46,13 @@ export async function registerNotificationDevice(
   const firebaseIdToken =
     await getFirebaseIdToken(user);
 
+  const platform =
+    Capacitor.getPlatform() === "android"
+      ? "ANDROID"
+      : Capacitor.getPlatform() === "ios"
+        ? "IOS"
+        : "WEB";
+
   const response = await fetch(
     `${BASE_URL}/api/customers/me/notification-devices`,
     {
@@ -56,7 +64,7 @@ export async function registerNotificationDevice(
       },
       body: JSON.stringify({
         token: fcmToken,
-        platform: "WEB",
+        platform,
       }),
     }
   );

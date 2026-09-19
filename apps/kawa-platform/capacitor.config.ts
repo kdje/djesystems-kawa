@@ -5,10 +5,20 @@ const config: CapacitorConfig = {
   appName: 'KAWA',
   webDir: 'dist',
   plugins: {
+
     FirebaseAuthentication: {
       providers: ["google.com"]
+    },
+
+    FirebaseMessaging: {
+      presentationOptions: [
+        "alert",
+        "badge",
+        "sound"
+      ]
     }
   }
+  
 };
 
 export default config;
