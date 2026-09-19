@@ -1,7 +1,9 @@
 package com.djesystems.kawa.customer.config;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,28 +33,40 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+
                 // Les requêtes CORS preflight ne portent pas le token Firebase
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                // Endpoint utilisé par Docker / AWS pour le healthcheck
                 .requestMatchers("/actuator/health").permitAll()
 
-                .anyRequest().authenticated())
+                .anyRequest().authenticated()
+            )
             .addFilterBefore(
                 firebaseAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class);
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource(
+            @Value(
+                "${KAWA_CORS_ALLOWED_ORIGINS:https://localhost,http://localhost:5173}"
+            )
+            String allowedOrigins) {
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration =
+            new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-            "https://localhost",        // application Capacitor Android
-            "http://localhost:5173"     // développement Vite local
-        ));
+        List<String> origins =
+            Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
+
+        configuration.setAllowedOrigins(origins);
 
         configuration.setAllowedMethods(List.of(
             "GET",
@@ -77,7 +91,10 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source =
             new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration(
+            "/**",
+            configuration
+        );
 
         return source;
     }
