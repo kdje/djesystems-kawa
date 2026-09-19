@@ -1,117 +1,218 @@
+import { Capacitor } from "@capacitor/core";
+import {
+  FirebaseMessaging
+} from "@capacitor-firebase/messaging";
+
 import {
   getMessaging,
   getToken,
-  onMessage,
-  MessagePayload
+  onMessage
 } from "firebase/messaging";
 
 import { firebaseApp } from "./firebase";
 
-const messaging = getMessaging(firebaseApp);
 
-export async function enableFirebaseNotifications(): Promise<string> {
+export type KawaMessagePayload = {
+  notification?: {
+    title?: string;
+    body?: string;
+  };
+  data?: Record<string, string>;
+};
 
+
+export async function enableFirebaseNotifications():
+  Promise<string> {
+
+  /*
+   * ANDROID / IOS
+   */
+  if (Capacitor.isNativePlatform()) {
+
+    console.log(
+      "[FCM] Native platform:",
+      Capacitor.getPlatform()
+    );
+
+    const permission =
+      await FirebaseMessaging.requestPermissions();
+
+    console.log(
+      "[FCM] Permission:",
+      permission.receive
+    );
+
+    if (permission.receive !== "granted") {
+      throw new Error(
+        "Permission de notification refusée."
+      );
+    }
+
+    const result =
+      await FirebaseMessaging.getToken();
+
+    console.log(
+      "[FCM] Native token:",
+      result.token
+    );
+
+    if (!result.token) {
+      throw new Error(
+        "Firebase n'a retourné aucun token FCM."
+      );
+    }
+
+    return result.token;
+  }
+
+
+  /*
+   * WEB
+   */
   if (!("Notification" in window)) {
-    throw new Error("Les notifications ne sont pas supportées par ce navigateur.");
+    throw new Error(
+      "Les notifications ne sont pas supportées."
+    );
   }
 
   if (!("serviceWorker" in navigator)) {
-    throw new Error("Les Service Workers ne sont pas supportés.");
+    throw new Error(
+      "Les Service Workers ne sont pas supportés."
+    );
   }
 
-  const permission = await Notification.requestPermission();
+  const permission =
+    await Notification.requestPermission();
 
   if (permission !== "granted") {
-    throw new Error("L'utilisateur n'a pas autorisé les notifications.");
+    throw new Error(
+      "Permission de notification refusée."
+    );
   }
 
- const serviceWorkerRegistration =
-  await navigator.serviceWorker.register(
-    "/firebase-messaging-sw.js",
-    {
-      scope: "/firebase-cloud-messaging-push-scope/"
-    }
-  );
+  const registration =
+    await navigator.serviceWorker.register(
+      "/firebase-messaging-sw.js"
+    );
 
-if (!serviceWorkerRegistration.active) {
-  const worker =
-    serviceWorkerRegistration.installing ??
-    serviceWorkerRegistration.waiting;
-
-  if (worker) {
-    await new Promise<void>((resolve, reject) => {
-      const timeout = window.setTimeout(() => {
-        reject(
-          new Error(
-            "Timeout en attendant l'activation du service worker Firebase."
-          )
-        );
-      }, 10000);
-
-      worker.addEventListener("statechange", () => {
-        if (worker.state === "activated") {
-          window.clearTimeout(timeout);
-          resolve();
-        }
-      });
-    });
-  }
-}
-
-if (!serviceWorkerRegistration.active) {
-  throw new Error(
-    "Le service worker Firebase n'est pas actif."
-  );
-}
-
-  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  const vapidKey =
+    import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
   if (!vapidKey) {
-    throw new Error("VITE_FIREBASE_VAPID_KEY est absent.");
+    throw new Error(
+      "VITE_FIREBASE_VAPID_KEY est absent."
+    );
   }
 
-  const token = await getToken(messaging, {
-    vapidKey,
-    serviceWorkerRegistration
-  });
+  const messaging =
+    getMessaging(firebaseApp);
 
-  if (!token) {
-    throw new Error("Firebase n'a retourné aucun FCM token.");
+  const result =
+    await getToken(
+      messaging,
+      {
+        vapidKey,
+        serviceWorkerRegistration:
+          registration
+      }
+    );
+
+  if (!result) {
+    throw new Error(
+      "Firebase n'a retourné aucun token FCM."
+    );
   }
 
-  console.log("======================================");
-  console.log("FCM TEST TOKEN");
-  console.log(token);
-  console.log("======================================");
+  console.log(
+    "[FCM] Web token:",
+    result
+  );
 
-  return token;
+  return result;
 }
 
+
 export function listenForFirebaseMessages(
-  callback?: (payload: MessagePayload) => void
+  callback?: (
+    payload: KawaMessagePayload
+  ) => void
 ) {
 
-  return onMessage(messaging, (payload) => {
+  /*
+   * ANDROID / IOS
+   */
+  if (Capacitor.isNativePlatform()) {
 
-    console.log("=== MESSAGE FCM REÇU ===");
-    console.log("Payload complet :", payload);
-    console.log("Titre :", payload.notification?.title);
-    console.log("Body :", payload.notification?.body);
-    console.log("Data :", payload.data);
+    const listenerPromise =
+      FirebaseMessaging.addListener(
+        "notificationReceived",
+        event => {
+
+          console.log(
+            "[FCM] Notification native:",
+            event
+          );
+
+          callback?.({
+            notification: {
+              title:
+                event.notification.title,
+              body:
+                event.notification.body
+            },
+            data:
+              event.notification.data as
+                Record<string, string>
+                | undefined
+          });
+        }
+      );
+
+    return () => {
+      void listenerPromise.then(
+        listener => listener.remove()
+      );
+    };
+  }
 
 
-    callback?.(payload);
+  /*
+   * WEB
+   */
+  const messaging =
+    getMessaging(firebaseApp);
 
-    const title =
-      payload.notification?.title ?? "KAWA";
+  return onMessage(
+    messaging,
+    payload => {
 
-    const body =
-      payload.notification?.body ?? "Nouvelle notification";
+      console.log(
+        "[FCM] Notification web:",
+        payload
+      );
 
-    if (Notification.permission === "granted") {
-      new Notification(title, {
-        body
+      callback?.({
+        notification:
+          payload.notification,
+        data:
+          payload.data
       });
+
+      if (
+        Notification.permission
+        === "granted"
+      ) {
+
+        new Notification(
+          payload.notification?.title
+            ?? "KAWA",
+          {
+            body:
+              payload.notification?.body
+              ?? "Nouvelle notification"
+          }
+        );
+      }
     }
-  });
+  );
 }
