@@ -72,6 +72,7 @@ services:
       MYSQL_USER: kawa
       MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
       GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-service-account.json
+      KAWA_CORS_ALLOWED_ORIGINS: "https://dev.kawa-retail.com,https://localhost,http://localhost:5173"
     ports:
       - "127.0.0.1:8081:8081"
     volumes:
