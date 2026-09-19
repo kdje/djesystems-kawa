@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "435772282016",
+    "project_id": "kawa-dev-74031",
+    "storage_bucket": "kawa-dev-74031.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435772282016:android:05e6ff843c0a0a8fbfa5c5",
+        "android_client_info": {
+          "package_name": "com.djesystems.kawa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "435772282016-f8lntu7g7apjbs6fra652sh1ag704qjo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.djesystems.kawa",
+            "certificate_hash": "80ec6e48fa6b50963de1086725caa52fc6f22ecd"
+          }
+        },
+        {
+          "client_id": "435772282016-tbv8otqau115eoihejpjsbouu9tc6elv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVj7Lei_9SUyP-TIWqV8kr5O_mBMg_J58"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "435772282016-tbv8otqau115eoihejpjsbouu9tc6elv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
