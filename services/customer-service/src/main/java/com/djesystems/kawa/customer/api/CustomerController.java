@@ -12,6 +12,9 @@ import com.djesystems.kawa.customer.application.NotificationDeviceService;
 import com.djesystems.kawa.customer.domain.Customer;
 import com.djesystems.kawa.customer.security.FirebaseUserPrincipal;
 
+import com.djesystems.kawa.customer.api.dto.CustomerRetailersResponse;
+import com.djesystems.kawa.customer.application.CustomerRetailerRelationService;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -25,15 +28,18 @@ public class CustomerController {
     private final CustomerService customerService;
     private final NotificationDeviceService notificationDeviceService;
     private final ConsentDecisionService consentDecisionService;
+    private final CustomerRetailerRelationService customerRetailerRelationService;
 
     public CustomerController(
             CustomerService customerService,
             NotificationDeviceService notificationDeviceService,
-            ConsentDecisionService consentDecisionService) {
+            ConsentDecisionService consentDecisionService,
+            CustomerRetailerRelationService customerRetailerRelationService) {
 
         this.customerService = customerService;
         this.notificationDeviceService = notificationDeviceService;
         this.consentDecisionService = consentDecisionService;
+        this.customerRetailerRelationService = customerRetailerRelationService;
     }
 
     /**
@@ -102,4 +108,19 @@ public class CustomerController {
                 request.decision()
         );
     }
+
+    @GetMapping("/me/retailers")
+        public CustomerRetailersResponse retailers(
+                Authentication authentication) {
+
+        /*
+        * Réutilise volontairement la résolution du customer
+        * déjà présente dans /me.
+        */
+        CustomerResponse customer = me(authentication);
+
+        return customerRetailerRelationService.getRetailers(
+                customer.publicKawaId()
+        );
+   }
 }

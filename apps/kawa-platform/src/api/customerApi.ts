@@ -1,43 +1,110 @@
 import type { User } from "firebase/auth";
-import { getFirebaseIdToken } from "../auth/authService";
-import type { Customer, KawaIdResponse } from "../types/Customer";
 import { Capacitor } from "@capacitor/core";
 
-const BASE_URL =
-  import.meta.env.VITE_CUSTOMER_API_BASE_URL ?? "http://localhost:8081";
+import { getFirebaseIdToken } from "../auth/authService";
+import type {
+  Customer,
+  KawaIdResponse,
+} from "../types/Customer";
 
+export type RetailerRelationStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "ACTIVE"
+  | "REJECTED";
+
+export type CustomerRetailerRelation = {
+  retailerCode: string;
+  status: RetailerRelationStatus;
+  sourceEventId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerRetailersResponse = {
+  activeCount: number;
+  pendingCount: number;
+  retailers: CustomerRetailerRelation[];
+};
+
+export type ConsentDecision =
+  | "APPROVED"
+  | "REJECTED";
+
+const BASE_URL =
+  import.meta.env.VITE_CUSTOMER_API_BASE_URL ??
+  "http://localhost:8081";
+
+/**
+ * GET authentifié vers customer-service.
+ */
 async function getAuthenticated<T>(
   path: string,
   user: User
 ): Promise<T> {
-  const token = await getFirebaseIdToken(user);
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const token =
+    await getFirebaseIdToken(user);
+
+  const response = await fetch(
+    `${BASE_URL}${path}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!response.ok) {
+    const responseBody =
+      await response.text();
+
     throw new Error(
-      `customer-service returned HTTP ${response.status}: ${await response.text()}`
+      `customer-service returned HTTP ${response.status}: ${responseBody}`
     );
   }
 
   return response.json() as Promise<T>;
 }
 
-export const getCurrentCustomer = (user: User) =>
-  getAuthenticated<Customer>("/api/customers/me", user);
+/**
+ * Retourne le customer KAWA connecté.
+ */
+export const getCurrentCustomer = (
+  user: User
+) =>
+  getAuthenticated<Customer>(
+    "/api/customers/me",
+    user
+  );
 
-export const getCurrentKawaId = (user: User) =>
+/**
+ * Retourne le KawaId public du customer connecté.
+ */
+export const getCurrentKawaId = (
+  user: User
+) =>
   getAuthenticated<KawaIdResponse>(
     "/api/customers/me/kawa-id",
     user
   );
 
+/**
+ * Retourne les associations enseignes du customer connecté.
+ */
+export const getMyRetailers = (
+  user: User
+) =>
+  getAuthenticated<CustomerRetailersResponse>(
+    "/api/customers/me/retailers",
+    user
+  );
+
+/**
+ * Enregistre le device FCM du customer connecté.
+ */
 export async function registerNotificationDevice(
   user: User,
   fcmToken: string
@@ -46,10 +113,13 @@ export async function registerNotificationDevice(
   const firebaseIdToken =
     await getFirebaseIdToken(user);
 
+  const capacitorPlatform =
+    Capacitor.getPlatform();
+
   const platform =
-    Capacitor.getPlatform() === "android"
+    capacitorPlatform === "android"
       ? "ANDROID"
-      : Capacitor.getPlatform() === "ios"
+      : capacitorPlatform === "ios"
         ? "IOS"
         : "WEB";
 
@@ -62,6 +132,7 @@ export async function registerNotificationDevice(
         "Content-Type": "application/json",
         Authorization: `Bearer ${firebaseIdToken}`,
       },
+
       body: JSON.stringify({
         token: fcmToken,
         platform,
@@ -70,15 +141,18 @@ export async function registerNotificationDevice(
   );
 
   if (!response.ok) {
+    const responseBody =
+      await response.text();
+
     throw new Error(
-      `customer-service returned HTTP ${response.status}: ${await response.text()}`
+      `customer-service returned HTTP ${response.status}: ${responseBody}`
     );
   }
 }
 
-export type ConsentDecision =
-  "APPROVED" | "REJECTED";
-
+/**
+ * Accepte ou refuse une demande d'association enseigne.
+ */
 export async function respondToConsentRequest(
   user: User,
   eventId: string,
@@ -89,7 +163,9 @@ export async function respondToConsentRequest(
     await getFirebaseIdToken(user);
 
   const response = await fetch(
-    `${BASE_URL}/api/customers/me/consent-requests/${encodeURIComponent(eventId)}/decision`,
+    `${BASE_URL}/api/customers/me/consent-requests/${encodeURIComponent(
+      eventId
+    )}/decision`,
     {
       method: "POST",
       headers: {
@@ -97,6 +173,7 @@ export async function respondToConsentRequest(
         "Content-Type": "application/json",
         Authorization: `Bearer ${firebaseIdToken}`,
       },
+
       body: JSON.stringify({
         decision,
       }),
@@ -104,8 +181,11 @@ export async function respondToConsentRequest(
   );
 
   if (!response.ok) {
+    const responseBody =
+      await response.text();
+
     throw new Error(
-      `Impossible d'enregistrer le consentement : HTTP ${response.status}: ${await response.text()}`
+      `Impossible d'enregistrer le consentement : HTTP ${response.status}: ${responseBody}`
     );
   }
 }

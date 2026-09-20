@@ -3,9 +3,13 @@ package com.djesystems.kawa.customer.application;
 import com.djesystems.kawa.customer.domain.ConsentDecision;
 import com.djesystems.kawa.customer.domain.ConsentRequestStatus;
 import com.djesystems.kawa.customer.domain.Customer;
+import com.djesystems.kawa.customer.domain.CustomerRetailerRelationStatus;
 import com.djesystems.kawa.customer.domain.event.CustomerRetailerConsentDecidedEvent;
+
 import com.djesystems.kawa.customer.infrastructure.persistence.CustomerConsentRequestEntity;
 import com.djesystems.kawa.customer.infrastructure.persistence.CustomerConsentRequestRepository;
+import com.djesystems.kawa.customer.infrastructure.persistence.CustomerRetailerRelationEntity;
+import com.djesystems.kawa.customer.infrastructure.persistence.CustomerRetailerRelationRepository;
 import com.djesystems.kawa.customer.infrastructure.persistence.OutboxEventEntity;
 import com.djesystems.kawa.customer.infrastructure.persistence.OutboxEventRepository;
 
@@ -30,18 +34,25 @@ public class ConsentDecisionService {
             "CUSTOMER_CONSENT";
 
     private final CustomerService customerService;
+
     private final CustomerConsentRequestRepository consentRepository;
+
+    private final CustomerRetailerRelationRepository relationRepository;
+
     private final OutboxEventRepository outboxEventRepository;
+
     private final ObjectMapper objectMapper;
 
     public ConsentDecisionService(
             CustomerService customerService,
             CustomerConsentRequestRepository consentRepository,
+            CustomerRetailerRelationRepository relationRepository,
             OutboxEventRepository outboxEventRepository,
             ObjectMapper objectMapper) {
 
         this.customerService = customerService;
         this.consentRepository = consentRepository;
+        this.relationRepository = relationRepository;
         this.outboxEventRepository = outboxEventRepository;
         this.objectMapper = objectMapper;
     }
@@ -53,8 +64,7 @@ public class ConsentDecisionService {
             ConsentDecision decision) {
 
         /*
-         * On déduit le publicKawaId depuis le user Firebase.
-         * Le frontend ne choisit jamais lui-même le customer.
+         * 1. On retrouve le customer depuis son identité Firebase.
          */
         Customer customer =
                 customerService.getCustomer(firebaseUid);
@@ -63,10 +73,8 @@ public class ConsentDecisionService {
                 customer.publicKawaId();
 
         /*
-         * On cherche simultanément par eventId ET publicKawaId.
-         *
-         * Impossible ainsi de décider une demande appartenant
-         * à un autre customer.
+         * 2. On récupère uniquement une demande appartenant
+         *    réellement au customer connecté.
          */
         CustomerConsentRequestEntity consent =
                 consentRepository
@@ -81,7 +89,10 @@ public class ConsentDecisionService {
                                 )
                         );
 
-        ConsentRequestStatus targetStatus =
+        /*
+         * 3. Etat de la demande de consentement.
+         */
+        ConsentRequestStatus targetConsentStatus =
                 switch (decision) {
 
                     case APPROVED ->
@@ -92,23 +103,43 @@ public class ConsentDecisionService {
                 };
 
         /*
-         * Idempotence :
-         *
-         * si le même choix a déjà été enregistré,
-         * on répond OK sans créer un deuxième événement.
+         * 4. Etat de la projection utilisée par
+         *    la page "Mes enseignes".
          */
-        if (consent.getStatus() == targetStatus) {
+        CustomerRetailerRelationStatus targetRelationStatus =
+                switch (decision) {
+
+                    case APPROVED ->
+                            CustomerRetailerRelationStatus.APPROVED;
+
+                    case REJECTED ->
+                            CustomerRetailerRelationStatus.REJECTED;
+                };
+
+        /*
+         * 5. Idempotence.
+         *
+         * Si la même décision a déjà été prise,
+         * on ne republie pas un nouvel événement.
+         *
+         * En revanche, on resynchronise quand même
+         * customer_retailer_relation au cas où
+         * la projection serait restée en PENDING.
+         */
+        if (consent.getStatus() == targetConsentStatus) {
+
+            updateRelation(
+                    publicKawaId,
+                    consent.getRetailerCode(),
+                    targetRelationStatus,
+                    consentRequestEventId
+            );
+
             return;
         }
 
         /*
-         * En revanche :
-         *
-         * APPROVED puis REJECTED
-         * ou
-         * REJECTED puis APPROVED
-         *
-         * n'est pas autorisé ici.
+         * Une décision déjà prise ne peut pas être inversée ici.
          */
         if (consent.getStatus()
                 != ConsentRequestStatus.PENDING) {
@@ -120,24 +151,43 @@ public class ConsentDecisionService {
             );
         }
 
-        Instant now = Instant.now();
+        Instant now =
+                Instant.now();
 
         /*
-         * 1. Modification de la demande.
+         * 6. Mise à jour de la demande.
          */
         consent.decide(
-                targetStatus,
+                targetConsentStatus,
                 now
         );
 
         consentRepository.save(consent);
 
         /*
-         * 2. Création du nouvel événement.
+         * L'identifiant du nouvel événement de décision.
          */
         String eventId =
                 UUID.randomUUID().toString();
 
+        /*
+         * 7. Mise à jour de la projection
+         *    customer_retailer_relation.
+         *
+         * PENDING -> APPROVED
+         * ou
+         * PENDING -> REJECTED
+         */
+        updateRelation(
+                publicKawaId,
+                consent.getRetailerCode(),
+                targetRelationStatus,
+                eventId
+        );
+
+        /*
+         * 8. Création de l'événement envoyé au Wallet.
+         */
         CustomerRetailerConsentDecidedEvent event =
                 new CustomerRetailerConsentDecidedEvent(
                         eventId,
@@ -153,10 +203,12 @@ public class ConsentDecisionService {
                 serialize(event);
 
         /*
-         * 3. Transactional Outbox.
+         * 9. Transactional Outbox.
          *
-         * La décision et l'événement sont enregistrés
-         * dans la même transaction MySQL.
+         * La décision,
+         * la projection Customer
+         * et l'événement Outbox
+         * sont enregistrés dans la même transaction MySQL.
          */
         OutboxEventEntity outbox =
                 new OutboxEventEntity(
@@ -168,6 +220,43 @@ public class ConsentDecisionService {
                 );
 
         outboxEventRepository.save(outbox);
+    }
+
+    /**
+     * Met à jour la projection utilisée par l'écran
+     * "Mes enseignes".
+     *
+     * Le orElseGet rend le traitement robuste :
+     * si la projection n'existe pas encore pour une raison
+     * quelconque, elle est recréée.
+     */
+    private void updateRelation(
+            String publicKawaId,
+            String retailerCode,
+            CustomerRetailerRelationStatus status,
+            String sourceEventId) {
+
+        CustomerRetailerRelationEntity relation =
+                relationRepository
+                        .findByPublicKawaIdAndRetailerCode(
+                                publicKawaId,
+                                retailerCode
+                        )
+                        .orElseGet(() ->
+                                new CustomerRetailerRelationEntity(
+                                        publicKawaId,
+                                        retailerCode,
+                                        status,
+                                        sourceEventId
+                                )
+                        );
+
+        relation.updateStatus(
+                status,
+                sourceEventId
+        );
+
+        relationRepository.save(relation);
     }
 
     private String serialize(
