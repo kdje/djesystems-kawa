@@ -4,10 +4,10 @@ import com.azure.messaging.servicebus.ServiceBusErrorContext;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
 
 import com.djesystems.kawa.customer.application.ConsentRequestEventHandler;
-import com.djesystems.kawa.customer.application.RetailerLinkActivatedEventHandler;
+import com.djesystems.kawa.customer.application.CustomerRetailerLinkedEventHandler;
 
 import com.djesystems.kawa.customer.infrastructure.messaging.dto.CustomerRetailerConsentRequestedEvent;
-import com.djesystems.kawa.customer.infrastructure.messaging.dto.CustomerRetailerLinkActivatedEvent;
+import com.djesystems.kawa.customer.infrastructure.messaging.dto.CustomerRetailerLinkedEvent;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,28 +28,30 @@ public class WalletEventHandler {
     private static final String CONSENT_REQUESTED =
             "CUSTOMER_RETAILER_CONSENT_REQUESTED";
 
-    private static final String LINK_ACTIVATED =
-            "CUSTOMER_RETAILER_LINK_ACTIVATED";
+    private static final String RETAILER_LINKED =
+            "CUSTOMER_RETAILER_LINKED";
 
     private final ObjectMapper objectMapper;
 
     private final ConsentRequestEventHandler
             consentRequestEventHandler;
 
-    private final RetailerLinkActivatedEventHandler
-            retailerLinkActivatedEventHandler;
+    private final CustomerRetailerLinkedEventHandler
+            customerRetailerLinkedEventHandler;
 
     public WalletEventHandler(
             ObjectMapper objectMapper,
             ConsentRequestEventHandler consentRequestEventHandler,
-            RetailerLinkActivatedEventHandler retailerLinkActivatedEventHandler) {
+            CustomerRetailerLinkedEventHandler customerRetailerLinkedEventHandler) {
 
-        this.objectMapper = objectMapper;
+        this.objectMapper =
+                objectMapper;
+
         this.consentRequestEventHandler =
                 consentRequestEventHandler;
 
-        this.retailerLinkActivatedEventHandler =
-                retailerLinkActivatedEventHandler;
+        this.customerRetailerLinkedEventHandler =
+                customerRetailerLinkedEventHandler;
     }
 
     public void process(
@@ -72,8 +74,11 @@ public class WalletEventHandler {
                             .asText();
 
             log.info(
-                    "Wallet event received: eventType={}",
-                    eventType
+                    "Wallet event received: eventType={}, messageId={}",
+                    eventType,
+                    context
+                            .getMessage()
+                            .getMessageId()
             );
 
             switch (eventType) {
@@ -90,23 +95,27 @@ public class WalletEventHandler {
                             .handle(event);
                 }
 
-                case LINK_ACTIVATED -> {
+                case RETAILER_LINKED -> {
 
-                    CustomerRetailerLinkActivatedEvent event =
+                    CustomerRetailerLinkedEvent event =
                             objectMapper.treeToValue(
                                     root,
-                                    CustomerRetailerLinkActivatedEvent.class
+                                    CustomerRetailerLinkedEvent.class
                             );
 
-                    retailerLinkActivatedEventHandler
+                    customerRetailerLinkedEventHandler
                             .handle(event);
                 }
 
                 default ->
-                        log.warn(
-                                "Unsupported Wallet event: {}",
-                                eventType
-                        );
+
+                    log.warn(
+                            "Unsupported Wallet event: eventType={}, messageId={}",
+                            eventType,
+                            context
+                                    .getMessage()
+                                    .getMessageId()
+                    );
             }
 
         } catch (Exception ex) {
@@ -128,7 +137,9 @@ public class WalletEventHandler {
 
         log.error(
                 "Wallet Service Bus error: {}",
-                context.getException().getMessage(),
+                context
+                        .getException()
+                        .getMessage(),
                 context.getException()
         );
     }
