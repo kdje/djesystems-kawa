@@ -7,6 +7,10 @@ import com.djesystems.kawa.customer.infrastructure.persistence.CustomerConsentRe
 import com.djesystems.kawa.customer.infrastructure.persistence.NotificationOutboxEntity;
 import com.djesystems.kawa.customer.infrastructure.persistence.NotificationOutboxRepository;
 
+import com.djesystems.kawa.customer.domain.CustomerRetailerRelationStatus;
+import com.djesystems.kawa.customer.infrastructure.persistence.CustomerRetailerRelationEntity;
+import com.djesystems.kawa.customer.infrastructure.persistence.CustomerRetailerRelationRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,12 +27,16 @@ public class ConsentRequestEventHandler {
     private final CustomerConsentRequestRepository consentRepository;
     private final NotificationOutboxRepository notificationOutboxRepository;
 
+    private final CustomerRetailerRelationRepository relationRepository;
+
     public ConsentRequestEventHandler(
             CustomerConsentRequestRepository consentRepository,
-            NotificationOutboxRepository notificationOutboxRepository) {
+            NotificationOutboxRepository notificationOutboxRepository,
+            CustomerRetailerRelationRepository relationRepository) {
 
         this.consentRepository = consentRepository;
         this.notificationOutboxRepository = notificationOutboxRepository;
+        this.relationRepository = relationRepository;
     }
 
     @Transactional
@@ -59,6 +67,28 @@ public class ConsentRequestEventHandler {
                 );
 
         consentRepository.save(consent);
+
+        CustomerRetailerRelationEntity relation =
+                relationRepository
+                        .findByPublicKawaIdAndRetailerCode(
+                        event.publicKawaId(),
+                        event.retailerCode()
+                        )
+                        .orElseGet(() ->
+                        new CustomerRetailerRelationEntity(
+                                event.publicKawaId(),
+                                event.retailerCode(),
+                                CustomerRetailerRelationStatus.PENDING,
+                                event.eventId()
+                        )
+                        );
+
+                relation.updateStatus(
+                CustomerRetailerRelationStatus.PENDING,
+                event.eventId()
+                );
+
+        relationRepository.save(relation);
 
         String payload = """
                 {

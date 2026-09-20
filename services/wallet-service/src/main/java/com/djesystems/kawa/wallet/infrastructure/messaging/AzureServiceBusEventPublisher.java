@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
+
 @Component
 @ConditionalOnProperty(
     name = "kawa.wallet.outbox.transport",
@@ -18,7 +21,14 @@ import org.springframework.stereotype.Component;
 public class AzureServiceBusEventPublisher
         implements EventPublisher {
 
+    private static final Set<String> SUPPORTED_EVENT_TYPES =
+        Set.of(
+            "CUSTOMER_RETAILER_CONSENT_REQUESTED",
+            "CUSTOMER_RETAILER_LINKED"
+        );
+
     private final ServiceBusSenderClient sender;
+
 
     public AzureServiceBusEventPublisher(
             TokenCredential walletAzureCredential,
@@ -43,27 +53,68 @@ public class AzureServiceBusEventPublisher
                 .buildClient();
     }
 
+
     @Override
     public void publish(
             String eventId,
             String eventType,
             String payload) {
 
-        if (!"CUSTOMER_RETAILER_CONSENT_REQUESTED".equals(eventType)) {
+        /*
+         * Protection volontaire :
+         *
+         * seuls les événements explicitement
+         * gérés par le wallet-service peuvent
+         * être publiés sur le topic Wallet.
+         */
+        if (!SUPPORTED_EVENT_TYPES.contains(eventType)) {
+
             throw new IllegalArgumentException(
-                "Unsupported outbox event type: " + eventType
+                "Unsupported outbox event type: "
+                    + eventType
             );
         }
+
 
         ServiceBusMessage message =
             new ServiceBusMessage(payload);
 
-        message.setMessageId(eventId);
-        message.setSubject(eventType);
 
+        /*
+         * MessageId permet notamment de conserver
+         * l'identifiant métier de l'événement.
+         */
+        message.setMessageId(
+            eventId
+        );
+
+
+        /*
+         * Le subject contient le type d'événement.
+         *
+         * Exemple :
+         *
+         * CUSTOMER_RETAILER_LINKED
+         */
+        message.setSubject(
+            eventType
+        );
+
+
+        /*
+         * Propriété applicative utilisée
+         * pour le routage / filtrage éventuel
+         * dans Azure Service Bus.
+         */
         message.getApplicationProperties()
-            .put("eventType", eventType);
+            .put(
+                "eventType",
+                eventType
+            );
 
-        sender.sendMessage(message);
+
+        sender.sendMessage(
+            message
+        );
     }
 }
