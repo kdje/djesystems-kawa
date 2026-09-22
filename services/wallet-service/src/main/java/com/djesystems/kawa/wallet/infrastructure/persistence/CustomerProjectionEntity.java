@@ -16,37 +16,22 @@ import jakarta.persistence.Table;
 public class CustomerProjectionEntity {
 
     @Id
-    @Column(
-        name = "public_kawa_id",
-        nullable = false,
-        length = 100
-    )
+    @Column(name = "public_kawa_id", nullable = false, length = 100)
     private String publicKawaId;
+
     private String email;
 
-
     @Enumerated(EnumType.STRING)
-    @Column(
-        name = "status",
-        nullable = false,
-        length = 30
-    )
+    @Column(name = "status", nullable = false, length = 30)
     private CustomerProjectionStatus status;
 
-    @Column(
-        name = "created_at",
-        nullable = false,
-        insertable = false,
-        updatable = false
-    )
+    @Column(name = "auto_retailer_association_enabled", nullable = false)
+    private boolean autoRetailerAssociationEnabled;
+
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(
-        name = "updated_at",
-        nullable = false,
-        insertable = false,
-        updatable = false
-    )
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
     protected CustomerProjectionEntity() {
@@ -55,38 +40,24 @@ public class CustomerProjectionEntity {
     public CustomerProjectionEntity(
             String publicKawaId,
             CustomerProjectionStatus status,
-            String email ) {
-
+            String email,
+            boolean autoRetailerAssociationEnabled) {
         this.publicKawaId = publicKawaId;
         this.status = status;
         this.email = email;
+        this.autoRetailerAssociationEnabled = autoRetailerAssociationEnabled;
     }
 
-    public String getPublicKawaId() {
-        return publicKawaId;
-    }
+    public String getPublicKawaId() { return publicKawaId; }
+    public CustomerProjectionStatus getStatus() { return status; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public String getEmail() { return email; }
+    public boolean isAutoRetailerAssociationEnabled() { return autoRetailerAssociationEnabled; }
 
-    public CustomerProjectionStatus getStatus() {
-        return status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setStatus(CustomerProjectionStatus status) {
-        this.status = status;
-    }
-
-    public String getEmail() {
-    return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public void setStatus(CustomerProjectionStatus status) { this.status = status; }
+    public void setEmail(String email) { this.email = email; }
+    public void setAutoRetailerAssociationEnabled(boolean enabled) {
+        this.autoRetailerAssociationEnabled = enabled;
     }
 }

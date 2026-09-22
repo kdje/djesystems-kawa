@@ -189,3 +189,38 @@ export async function respondToConsentRequest(
     );
   }
 }
+/**
+ * Active/désactive l'association automatique lors de la présentation du QR code.
+ */
+export async function updateAutoRetailerAssociation(
+  user: User,
+  enabled: boolean
+): Promise<Customer> {
+
+  const firebaseIdToken =
+    await getFirebaseIdToken(user);
+
+  const response = await fetch(
+    `${BASE_URL}/api/customers/me/preferences`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${firebaseIdToken}`,
+      },
+      body: JSON.stringify({
+        autoRetailerAssociationEnabled: enabled,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const responseBody = await response.text();
+    throw new Error(
+      `Impossible de modifier la préférence : HTTP ${response.status}: ${responseBody}`
+    );
+  }
+
+  return response.json() as Promise<Customer>;
+}

@@ -43,6 +43,9 @@ public class CustomerEntity {
     @Column(nullable = false, length = 20)
     private CustomerStatus status;
 
+    @Column(name = "auto_retailer_association_enabled", nullable = false)
+    private boolean autoRetailerAssociationEnabled;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -59,6 +62,7 @@ public class CustomerEntity {
             String publicKawaId,
             String email,
             CustomerStatus status,
+            boolean autoRetailerAssociationEnabled,
             Instant createdAt,
             Instant updatedAt
     ) {
@@ -67,6 +71,7 @@ public class CustomerEntity {
         this.publicKawaId = publicKawaId;
         this.email = email;
         this.status = status;
+        this.autoRetailerAssociationEnabled = autoRetailerAssociationEnabled;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -78,36 +83,23 @@ public class CustomerEntity {
                 publicKawaId,
                 email,
                 status,
+                autoRetailerAssociationEnabled,
                 createdAt,
                 updatedAt
         );
     }
 
-    public UUID getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
+    public String getFirebaseUid() { return firebaseUid; }
+    public String getPublicKawaId() { return publicKawaId; }
+    public String getEmail() { return email; }
+    public CustomerStatus getStatus() { return status; }
+    public boolean isAutoRetailerAssociationEnabled() { return autoRetailerAssociationEnabled; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 
-    public String getFirebaseUid() {
-        return firebaseUid;
-    }
-
-    public String getPublicKawaId() {
-        return publicKawaId;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public CustomerStatus getStatus() {
-        return status;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
+    public void setAutoRetailerAssociationEnabled(boolean enabled) {
+        this.autoRetailerAssociationEnabled = enabled;
+        this.updatedAt = Instant.now();
     }
 }

@@ -4,6 +4,7 @@ import com.djesystems.kawa.customer.domain.Customer;
 import com.djesystems.kawa.customer.domain.CustomerStatus;
 import com.djesystems.kawa.customer.domain.PublicKawaIdFactory;
 import com.djesystems.kawa.customer.domain.event.CustomerCreatedEvent;
+import com.djesystems.kawa.customer.domain.event.CustomerPreferencesUpdatedEvent;
 import com.djesystems.kawa.customer.infrastructure.persistence.CustomerEntity;
 import com.djesystems.kawa.customer.infrastructure.persistence.CustomerRepository;
 import com.djesystems.kawa.customer.infrastructure.persistence.OutboxEventEntity;
@@ -22,6 +23,7 @@ public class CustomerService {
 
     private static final String CUSTOMER_AGGREGATE_TYPE = "CUSTOMER";
     private static final String CUSTOMER_CREATED_EVENT = "CUSTOMER_CREATED";
+    private static final String CUSTOMER_PREFERENCES_UPDATED_EVENT = "CUSTOMER_PREFERENCES_UPDATED";
 
     private final CustomerRepository customerRepository;
     private final OutboxEventRepository outboxEventRepository;
@@ -37,22 +39,8 @@ public class CustomerService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Retourne le client correspondant au Firebase UID.
-     *
-     * Si le client Firebase existe mais n'a encore jamais été créé
-     * dans KAWA :
-     *
-     * 1. création du customer KAWA
-     * 2. création de l'événement CUSTOMER_CREATED dans l'outbox
-     *
-     * Les deux opérations appartiennent à la même transaction.
-     */
     @Transactional
-    public Customer getOrCreateCustomer(
-            String firebaseUid,
-            String email
-    ) {
+    public Customer getOrCreateCustomer(String firebaseUid, String email) {
         return customerRepository
                 .findByFirebaseUid(firebaseUid)
                 .map(CustomerEntity::toDomain)
@@ -61,35 +49,63 @@ public class CustomerService {
 
     @Transactional(readOnly = true)
     public Customer getCustomer(String firebaseUid) {
-
         return customerRepository
                 .findByFirebaseUid(firebaseUid)
                 .map(CustomerEntity::toDomain)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Customer not found for Firebase UID: "
-                                        + firebaseUid
-                        )
-                );
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Customer not found for Firebase UID: " + firebaseUid));
     }
 
     /**
-     * Création d'un nouveau Customer KAWA.
-     *
-     * IMPORTANT :
-     * cette méthode est appelée depuis getOrCreateCustomer(),
-     * qui possède @Transactional.
-     *
-     * Le customer et l'événement Outbox sont donc validés
-     * ou annulés ensemble.
+     * Active/désactive le consentement permanent aux associations retailer.
+     * La préférence et son événement Outbox sont persistés dans la même transaction.
      */
-    private Customer createCustomer(
+    @Transactional
+    public Customer updateAutoRetailerAssociation(
             String firebaseUid,
-            String email
-    ) {
+            boolean enabled) {
 
+        CustomerEntity entity = customerRepository
+                .findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Customer not found for Firebase UID: " + firebaseUid));
+
+        if (entity.isAutoRetailerAssociationEnabled() == enabled) {
+            return entity.toDomain();
+        }
+
+        entity.setAutoRetailerAssociationEnabled(enabled);
+        customerRepository.save(entity);
+
+        String eventId = UUID.randomUUID().toString();
         Instant now = Instant.now();
 
+        CustomerPreferencesUpdatedEvent event =
+                new CustomerPreferencesUpdatedEvent(
+                        eventId,
+                        CUSTOMER_PREFERENCES_UPDATED_EVENT,
+                        entity.getPublicKawaId(),
+                        entity.getEmail(),
+                        entity.getStatus().name(),
+                        enabled,
+                        now
+                );
+
+        outboxEventRepository.save(
+                new OutboxEventEntity(
+                        eventId,
+                        CUSTOMER_AGGREGATE_TYPE,
+                        entity.getPublicKawaId(),
+                        CUSTOMER_PREFERENCES_UPDATED_EVENT,
+                        serializeEvent(event)
+                )
+        );
+
+        return entity.toDomain();
+    }
+
+    private Customer createCustomer(String firebaseUid, String email) {
+        Instant now = Instant.now();
         String publicKawaId = generateUniquePublicKawaId();
 
         CustomerEntity entity = new CustomerEntity(
@@ -98,99 +114,54 @@ public class CustomerService {
                 publicKawaId,
                 email,
                 CustomerStatus.ACTIVE,
+                false,
                 now,
                 now
         );
 
-        /*
-         * 1. Enregistrement du Customer.
-         */
-        CustomerEntity savedEntity =
-                customerRepository.save(entity);
+        CustomerEntity savedEntity = customerRepository.save(entity);
 
-        /*
-         * 2. Création de l'événement métier.
-         */
         String eventId = UUID.randomUUID().toString();
 
-        CustomerCreatedEvent event =
-                new CustomerCreatedEvent(
-                        eventId,
-                        CUSTOMER_CREATED_EVENT,
-                        publicKawaId,
-                        email,
-                        CustomerStatus.ACTIVE.name(),
-                        now
-                );
+        CustomerCreatedEvent event = new CustomerCreatedEvent(
+                eventId,
+                CUSTOMER_CREATED_EVENT,
+                publicKawaId,
+                email,
+                CustomerStatus.ACTIVE.name(),
+                false,
+                now
+        );
 
-        /*
-         * 3. Sérialisation JSON du payload qui sera,
-         * plus tard, envoyé sur Azure Service Bus.
-         */
-        String payload = serializeEvent(event);
-
-        /*
-         * 4. Enregistrement dans la table Outbox.
-         *
-         * published_at reste NULL.
-         *
-         * Cela signifie :
-         * "cet événement doit encore être publié sur le bus".
-         */
-        OutboxEventEntity outboxEvent =
+        outboxEventRepository.save(
                 new OutboxEventEntity(
                         eventId,
                         CUSTOMER_AGGREGATE_TYPE,
                         publicKawaId,
                         CUSTOMER_CREATED_EVENT,
-                        payload
-                );
+                        serializeEvent(event)
+                )
+        );
 
-        outboxEventRepository.save(outboxEvent);
-
-        /*
-         * Si une exception survient avant la fin de la méthode,
-         * Spring rollbackera :
-         *
-         * - INSERT customers
-         * - INSERT outbox_event
-         */
         return savedEntity.toDomain();
     }
 
-    /**
-     * Sérialise l'événement métier en JSON.
-     *
-     * Une erreur de sérialisation provoque une RuntimeException,
-     * donc la transaction Customer + Outbox est rollbackée.
-     */
-    private String serializeEvent(CustomerCreatedEvent event) {
-
+    private String serializeEvent(Object event) {
         try {
             return objectMapper.writeValueAsString(event);
-
         } catch (JsonProcessingException ex) {
-
             throw new IllegalStateException(
-                    "Unable to serialize CUSTOMER_CREATED event",
+                    "Unable to serialize customer event",
                     ex
             );
         }
     }
 
-    /**
-     * La probabilité d'une collision UUID est extrêmement faible,
-     * mais nous vérifions quand même l'unicité en base.
-     */
     private String generateUniquePublicKawaId() {
-
         String candidate;
-
         do {
             candidate = PublicKawaIdFactory.generate();
-        }
-        while (customerRepository.existsByPublicKawaId(candidate));
-
+        } while (customerRepository.existsByPublicKawaId(candidate));
         return candidate;
     }
 }

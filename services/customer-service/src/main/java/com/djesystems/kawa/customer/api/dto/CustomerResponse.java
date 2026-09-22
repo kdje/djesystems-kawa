@@ -8,15 +8,16 @@ public record CustomerResponse(
         String publicKawaId,
         String email,
         String status,
+        boolean autoRetailerAssociationEnabled,
         Instant createdAt
 ) {
 
     public static CustomerResponse from(Customer customer) {
-
         return new CustomerResponse(
                 customer.publicKawaId(),
                 customer.email(),
                 customer.status().name(),
+                customer.autoRetailerAssociationEnabled(),
                 customer.createdAt()
         );
     }

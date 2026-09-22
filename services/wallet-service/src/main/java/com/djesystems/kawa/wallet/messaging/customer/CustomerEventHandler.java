@@ -119,7 +119,8 @@ public class CustomerEventHandler {
             customerProjectionService.synchronize(
                 event.publicKawaId(),
                 event.status(),
-                event.email()
+                event.email(),
+                event.autoRetailerAssociationEnabled()
             );
 
 

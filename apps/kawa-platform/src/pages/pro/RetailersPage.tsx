@@ -3,7 +3,9 @@ import { getAuth } from "firebase/auth";
 
 import { AppIcon } from "../../components/AppIcon";
 import {
+  getCurrentCustomer,
   getMyRetailers,
+  updateAutoRetailerAssociation,
   type CustomerRetailersResponse,
   type CustomerRetailerRelation,
 } from "../../api/customerApi";
@@ -42,6 +44,12 @@ export function RetailersPage() {
   const [error, setError] =
     useState<string | null>(null);
 
+  const [autoAssociationEnabled, setAutoAssociationEnabled] =
+    useState(false);
+
+  const [preferenceSaving, setPreferenceSaving] =
+    useState(false);
+
   const loadRetailers = useCallback(async () => {
     try {
       setLoading(true);
@@ -55,8 +63,11 @@ export function RetailersPage() {
         );
       }
 
-      const response =
-        await getMyRetailers(user);
+      const [response, customer] =
+        await Promise.all([
+          getMyRetailers(user),
+          getCurrentCustomer(user),
+        ]);
 
       console.log(
         "[KAWA] Retailers response:",
@@ -64,6 +75,9 @@ export function RetailersPage() {
       );
 
       setData(response);
+      setAutoAssociationEnabled(
+        customer.autoRetailerAssociationEnabled
+      );
 
     } catch (err) {
       console.error(
@@ -105,6 +119,41 @@ export function RetailersPage() {
     };
   }, [loadRetailers]);
 
+  const handleAutoAssociationChange =
+    async (enabled: boolean) => {
+      const user = getAuth().currentUser;
+
+      if (!user) {
+        setError("Utilisateur Firebase non connecté.");
+        return;
+      }
+
+      const previous = autoAssociationEnabled;
+      setAutoAssociationEnabled(enabled);
+      setPreferenceSaving(true);
+
+      try {
+        const customer =
+          await updateAutoRetailerAssociation(
+            user,
+            enabled
+          );
+
+        setAutoAssociationEnabled(
+          customer.autoRetailerAssociationEnabled
+        );
+      } catch (err) {
+        setAutoAssociationEnabled(previous);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Impossible de modifier la préférence."
+        );
+      } finally {
+        setPreferenceSaving(false);
+      }
+    };
+
   const activeCount =
     data?.activeCount ?? 0;
 
@@ -130,6 +179,39 @@ export function RetailersPage() {
             votre identité KAWA à leur programme fidélité.
           </p>
         </div>
+      </section>
+
+      <section className="kawa-panel kawa-auto-association-panel">
+        <div className="kawa-auto-association-copy">
+          <span className="kawa-eyebrow">Association simplifiée</span>
+          <h2>Autoriser automatiquement les enseignes lorsque je présente mon QR code</h2>
+          <p>
+            Lorsque cette option est activée, la présentation volontaire de votre QR code
+            permet à KAWA de transmettre immédiatement les informations nécessaires à
+            l&apos;enseigne, sans notification de consentement supplémentaire.
+          </p>
+        </div>
+
+        <label className="kawa-switch-row">
+          <input
+            type="checkbox"
+            checked={autoAssociationEnabled}
+            disabled={loading || preferenceSaving}
+            onChange={(event) =>
+              void handleAutoAssociationChange(
+                event.target.checked
+              )
+            }
+          />
+          <span className="kawa-switch" aria-hidden="true" />
+          <span className="kawa-switch-label">
+            {preferenceSaving
+              ? "Enregistrement…"
+              : autoAssociationEnabled
+                ? "Association automatique activée"
+                : "Demander mon accord à chaque nouvelle enseigne"}
+          </span>
+        </label>
       </section>
 
       <section className="kawa-retailer-summary-grid">
@@ -398,12 +480,12 @@ export function RetailersPage() {
             </div>
 
             <h3>
-              Vous recevez une demande
+              KAWA applique votre préférence
             </h3>
 
             <p>
-              KAWA vous informe qu’une enseigne souhaite
-              créer l’association.
+              Si l’association automatique est activée, l’autorisation est immédiate.
+              Sinon, KAWA vous demande votre accord.
             </p>
 
           </article>
@@ -422,12 +504,12 @@ export function RetailersPage() {
             </div>
 
             <h3>
-              Vous gardez la décision
+              L’enseigne finalise le lien
             </h3>
 
             <p>
-              Vous autorisez ou refusez. Rien n’est associé
-              sans votre accord.
+              Après autorisation, l’enseigne crée votre identifiant fidélité puis confirme
+              le lien à KAWA.
             </p>
 
           </article>

@@ -14,6 +14,7 @@ public record Customer(
         String publicKawaId,
         String email,
         CustomerStatus status,
+        boolean autoRetailerAssociationEnabled,
         Instant createdAt,
         Instant updatedAt
 ) {
