@@ -1,0 +1,11 @@
+# Android Studio / Gradle local machine configuration and KAWA test secrets
+/local.properties
+
+# Build outputs
+/.gradle/
+/build/
+/app/build/
+
+# IDE
+/.idea/
+*.iml

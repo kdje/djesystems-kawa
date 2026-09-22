@@ -2,6 +2,7 @@ package com.djesystems.kawa.wallet.infrastructure.persistence;
 
 import java.time.LocalDateTime;
 
+import com.djesystems.kawa.wallet.domain.ConsentMode;
 import com.djesystems.kawa.wallet.domain.MappingStatus;
 
 import jakarta.persistence.Column;
@@ -20,10 +21,7 @@ import jakarta.persistence.UniqueConstraint;
     uniqueConstraints = {
         @UniqueConstraint(
             name = "uk_wallet_public_kawa_retailer",
-            columnNames = {
-                "public_kawa_id",
-                "retailer_code"
-            }
+            columnNames = {"public_kawa_id", "retailer_code"}
         )
     }
 )
@@ -33,48 +31,30 @@ public class RetailerCustomerMappingEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(
-        name = "public_kawa_id",
-        nullable = false,
-        length = 100
-    )
+    @Column(name = "public_kawa_id", nullable = false, length = 100)
     private String publicKawaId;
 
-    @Column(
-        name = "retailer_code",
-        nullable = false,
-        length = 100
-    )
+    @Column(name = "retailer_code", nullable = false, length = 100)
     private String retailerCode;
 
-    @Column(
-        name = "retailer_customer_id",
-        length = 255
-    )
+    @Column(name = "retailer_customer_id", length = 255)
     private String retailerCustomerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-        name = "status",
-        nullable = false,
-        length = 30
-    )
+    @Column(name = "status", nullable = false, length = 30)
     private MappingStatus status;
 
-    @Column(
-        name = "created_at",
-        nullable = false,
-        insertable = false,
-        updatable = false
-    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "consent_mode", length = 40)
+    private ConsentMode consentMode;
+
+    @Column(name = "consent_at")
+    private LocalDateTime consentAt;
+
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(
-        name = "updated_at",
-        nullable = false,
-        insertable = false,
-        updatable = false
-    )
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
     protected RetailerCustomerMappingEntity() {
@@ -85,114 +65,72 @@ public class RetailerCustomerMappingEntity {
             String retailerCode,
             String retailerCustomerId,
             MappingStatus status) {
-
         this.publicKawaId = publicKawaId;
         this.retailerCode = retailerCode;
         this.retailerCustomerId = retailerCustomerId;
         this.status = status;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getPublicKawaId() {
-        return publicKawaId;
-    }
-
-    public String getRetailerCode() {
-        return retailerCode;
-    }
-
-    public String getRetailerCustomerId() {
-        return retailerCustomerId;
-    }
-
-    public MappingStatus getStatus() {
-        return status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+    public Long getId() { return id; }
+    public String getPublicKawaId() { return publicKawaId; }
+    public String getRetailerCode() { return retailerCode; }
+    public String getRetailerCustomerId() { return retailerCustomerId; }
+    public MappingStatus getStatus() { return status; }
+    public ConsentMode getConsentMode() { return consentMode; }
+    public LocalDateTime getConsentAt() { return consentAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     public void activate(String retailerCustomerId) {
-
-        if (retailerCustomerId == null
-                || retailerCustomerId.isBlank()) {
-
-            throw new IllegalArgumentException(
-                "Retailer customer ID must not be blank"
-            );
+        if (retailerCustomerId == null || retailerCustomerId.isBlank()) {
+            throw new IllegalArgumentException("Retailer customer ID must not be blank");
         }
 
-        /*
-        * Appel idempotent :
-        * AUCHAN renvoie le même identifiant.
-        */
         if (status == MappingStatus.ACTIVE) {
-
-            if (retailerCustomerId.equals(
-                    this.retailerCustomerId)) {
-
+            if (retailerCustomerId.equals(this.retailerCustomerId)) {
                 return;
             }
-
             throw new IllegalStateException(
-                "Mapping is already ACTIVE with another retailer customer ID"
-            );
+                    "Mapping is already ACTIVE with another retailer customer ID");
         }
 
-        /*
-        * Impossible d'activer sans consentement préalable.
-        */
         if (status != MappingStatus.CONSENT_APPROVED) {
-
-            throw new IllegalStateException(
-                "Cannot activate mapping from status "
-                    + status
-            );
+            throw new IllegalStateException("Cannot activate mapping from status " + status);
         }
 
-        this.retailerCustomerId =
-            retailerCustomerId;
-
-        this.status =
-            MappingStatus.ACTIVE;
+        this.retailerCustomerId = retailerCustomerId;
+        this.status = MappingStatus.ACTIVE;
     }
 
     public void approveConsent() {
+        approveConsent(ConsentMode.EXPLICIT);
+    }
 
+    public void approveConsent(ConsentMode mode) {
         if (status == MappingStatus.CONSENT_APPROVED) {
+            if (consentMode == null) {
+                consentMode = mode;
+                consentAt = LocalDateTime.now();
+            }
             return;
         }
 
         if (status != MappingStatus.PENDING_CONSENT) {
-            throw new IllegalStateException(
-                "Cannot approve consent from status " + status
-            );
+            throw new IllegalStateException("Cannot approve consent from status " + status);
         }
 
         this.status = MappingStatus.CONSENT_APPROVED;
+        this.consentMode = mode;
+        this.consentAt = LocalDateTime.now();
     }
 
-
     public void rejectConsent() {
-
         if (status == MappingStatus.CONSENT_REJECTED) {
             return;
         }
-
         if (status != MappingStatus.PENDING_CONSENT) {
-            throw new IllegalStateException(
-                "Cannot reject consent from status " + status
-            );
+            throw new IllegalStateException("Cannot reject consent from status " + status);
         }
-
         this.status = MappingStatus.CONSENT_REJECTED;
     }
 }

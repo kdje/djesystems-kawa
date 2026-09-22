@@ -2,18 +2,16 @@ package com.djesystems.kawa.customer.api;
 
 import com.djesystems.kawa.customer.api.dto.ConsentDecisionRequest;
 import com.djesystems.kawa.customer.api.dto.CustomerResponse;
+import com.djesystems.kawa.customer.api.dto.CustomerRetailersResponse;
 import com.djesystems.kawa.customer.api.dto.KawaIdResponse;
 import com.djesystems.kawa.customer.api.dto.RegisterNotificationDeviceRequest;
-
+import com.djesystems.kawa.customer.api.dto.UpdateCustomerPreferencesRequest;
 import com.djesystems.kawa.customer.application.ConsentDecisionService;
+import com.djesystems.kawa.customer.application.CustomerRetailerRelationService;
 import com.djesystems.kawa.customer.application.CustomerService;
 import com.djesystems.kawa.customer.application.NotificationDeviceService;
-
 import com.djesystems.kawa.customer.domain.Customer;
 import com.djesystems.kawa.customer.security.FirebaseUserPrincipal;
-
-import com.djesystems.kawa.customer.api.dto.CustomerRetailersResponse;
-import com.djesystems.kawa.customer.application.CustomerRetailerRelationService;
 
 import jakarta.validation.Valid;
 
@@ -35,51 +33,52 @@ public class CustomerController {
             NotificationDeviceService notificationDeviceService,
             ConsentDecisionService consentDecisionService,
             CustomerRetailerRelationService customerRetailerRelationService) {
-
         this.customerService = customerService;
         this.notificationDeviceService = notificationDeviceService;
         this.consentDecisionService = consentDecisionService;
         this.customerRetailerRelationService = customerRetailerRelationService;
     }
 
-    /**
-     * Retourne le profil KAWA de l'utilisateur connecté.
-     */
     @GetMapping("/me")
     public CustomerResponse me(Authentication authentication) {
-
         FirebaseUserPrincipal principal =
                 (FirebaseUserPrincipal) authentication.getPrincipal();
 
-        Customer customer =
-                customerService.getOrCreateCustomer(
-                        principal.uid(),
-                        principal.email()
-                );
+        Customer customer = customerService.getOrCreateCustomer(
+                principal.uid(),
+                principal.email()
+        );
 
         return CustomerResponse.from(customer);
     }
 
-    /**
-     * Retourne uniquement l'identifiant public permanent KAWA.
-     *
-     * C'est cette valeur que le frontend peut encoder dans le QR code.
-     */
-    @GetMapping("/me/kawa-id")
-    public KawaIdResponse kawaId(Authentication authentication) {
+    @PatchMapping("/me/preferences")
+    public CustomerResponse updatePreferences(
+            Authentication authentication,
+            @Valid @RequestBody UpdateCustomerPreferencesRequest request) {
 
         FirebaseUserPrincipal principal =
                 (FirebaseUserPrincipal) authentication.getPrincipal();
 
-        Customer customer =
-                customerService.getOrCreateCustomer(
-                        principal.uid(),
-                        principal.email()
-                );
-
-        return new KawaIdResponse(
-                customer.publicKawaId()
+        Customer customer = customerService.updateAutoRetailerAssociation(
+                principal.uid(),
+                request.autoRetailerAssociationEnabled()
         );
+
+        return CustomerResponse.from(customer);
+    }
+
+    @GetMapping("/me/kawa-id")
+    public KawaIdResponse kawaId(Authentication authentication) {
+        FirebaseUserPrincipal principal =
+                (FirebaseUserPrincipal) authentication.getPrincipal();
+
+        Customer customer = customerService.getOrCreateCustomer(
+                principal.uid(),
+                principal.email()
+        );
+
+        return new KawaIdResponse(customer.publicKawaId());
     }
 
     @PostMapping("/me/notification-devices")
@@ -87,7 +86,6 @@ public class CustomerController {
     public void registerNotificationDevice(
             Authentication authentication,
             @Valid @RequestBody RegisterNotificationDeviceRequest request) {
-
         notificationDeviceService.register(
                 authentication.getName(),
                 request.token(),
@@ -101,7 +99,6 @@ public class CustomerController {
             Authentication authentication,
             @PathVariable String eventId,
             @Valid @RequestBody ConsentDecisionRequest request) {
-
         consentDecisionService.decide(
                 authentication.getName(),
                 eventId,
@@ -110,17 +107,8 @@ public class CustomerController {
     }
 
     @GetMapping("/me/retailers")
-        public CustomerRetailersResponse retailers(
-                Authentication authentication) {
-
-        /*
-        * Réutilise volontairement la résolution du customer
-        * déjà présente dans /me.
-        */
+    public CustomerRetailersResponse retailers(Authentication authentication) {
         CustomerResponse customer = me(authentication);
-
-        return customerRetailerRelationService.getRetailers(
-                customer.publicKawaId()
-        );
-   }
+        return customerRetailerRelationService.getRetailers(customer.publicKawaId());
+    }
 }

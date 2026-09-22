@@ -2,7 +2,7 @@ package com.djesystems.kawa.customer.domain.event;
 
 import java.time.Instant;
 
-public record CustomerCreatedEvent(
+public record CustomerPreferencesUpdatedEvent(
     String eventId,
     String eventType,
     String publicKawaId,

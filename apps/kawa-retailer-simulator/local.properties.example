@@ -1,0 +1,38 @@
+# -----------------------------------------------------------------------------
+# KAWA Retailer Simulator - configuration locale de développement
+# -----------------------------------------------------------------------------
+# 1. Copie ce fichier en "local.properties" dans ce même dossier.
+# 2. Complète les valeurs ci-dessous.
+# 3. local.properties est ignoré par Git et ne doit jamais être commité.
+#
+# Android Studio peut ajouter automatiquement une ligne sdk.dir=... dans le même
+# fichier. Garde-la : elle est compatible avec les propriétés KAWA ci-dessous.
+# -----------------------------------------------------------------------------
+
+# Exemple Windows ajouté/géré par Android Studio :
+# sdk.dir=C\:\\Users\\ton-user\\AppData\\Local\\Android\\Sdk
+
+# Tenant Entra commun aux Retail Clients
+KAWA_TENANT_ID=
+
+# Scope exposé par Wallet API, typiquement : api://<WALLET-APP-ID>/.default
+KAWA_WALLET_SCOPE=
+
+# URL du wallet/gateway de l'environnement testé
+KAWA_WALLET_BASE_URL=https://api-dev.kawa-retail.com
+
+# AUCHAN
+AUCHAN_CLIENT_ID=
+AUCHAN_CLIENT_SECRET=
+
+# CARREFOUR
+CARREFOUR_CLIENT_ID=
+CARREFOUR_CLIENT_SECRET=
+
+# CORA
+CORA_CLIENT_ID=
+CORA_CLIENT_SECRET=
+
+# LIDL
+LIDL_CLIENT_ID=
+LIDL_CLIENT_SECRET=

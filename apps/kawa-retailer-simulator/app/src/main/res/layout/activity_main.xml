@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="KAWA Retailer Simulator"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Simule une caisse retailer : OAuth2 → resolve → link." />
+
+        <Spinner
+            android:id="@+id/retailerSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" />
+
+        <EditText
+            android:id="@+id/tenantIdInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tenant ID Entra"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/clientIdInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Client ID"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/clientSecretInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Client secret"
+            android:inputType="textPassword" />
+
+        <EditText
+            android:id="@+id/scopeInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Scope, ex. api://.../.default"
+            android:inputType="textUri" />
+
+        <EditText
+            android:id="@+id/walletUrlInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Wallet base URL"
+            android:inputType="textUri" />
+
+        <Button
+            android:id="@+id/saveConfigButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enregistrer la configuration retailer" />
+
+        <EditText
+            android:id="@+id/kawaIdInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:hint="Kawa ID scanné ou saisi"
+            android:inputType="text" />
+
+        <Button
+            android:id="@+id/scanButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Scanner le QR code" />
+
+        <Button
+            android:id="@+id/simulateButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lancer le workflow retailer" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/logView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="#F3F5F4"
+            android:padding="12dp"
+            android:text="Prêt."
+            android:textIsSelectable="true"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+</ScrollView>
