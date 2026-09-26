@@ -7,14 +7,7 @@ type KawaIdentityCardProps = {
   compact?: boolean;
 };
 
-function shortId(value: string) {
-  if (value.length <= 18) return value;
-  return `${value.slice(0, 8)}…${value.slice(-8)}`;
-}
-
 export function KawaIdentityCard({ publicKawaId, status, compact = false }: KawaIdentityCardProps) {
-  const qrValue = `KAWA:1:${publicKawaId}`;
-
   return (
     <section className={`kawa-identity-card${compact ? " kawa-identity-card-compact" : ""}`}>
       <div className="kawa-card-glow" />
@@ -33,7 +26,7 @@ export function KawaIdentityCard({ publicKawaId, status, compact = false }: Kawa
 
       <div className="kawa-card-body">
         <div className="kawa-qr-panel">
-          <QRCodeSVG value={qrValue} size={compact ? 144 : 176} level="M" />
+          <QRCodeSVG value={publicKawaId} size={compact ? 144 : 176} level="M" />
         </div>
 
         <div className="kawa-card-copy">
@@ -44,7 +37,7 @@ export function KawaIdentityCard({ publicKawaId, status, compact = false }: Kawa
           <div className="kawa-id-block">
             <div>
               <span>KAWA ID</span>
-              <strong title={publicKawaId}>{shortId(publicKawaId)}</strong>
+              <strong>{publicKawaId}</strong>
             </div>
             <div className="kawa-verified-badge" title="Identité KAWA active">
               <AppIcon name="check" size={15} />
