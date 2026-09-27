@@ -40,7 +40,12 @@ export function HomePage({ user, customer, loading, error }: Props) {
       {!loading && !error && customer && (
         <>
           <section className="kawa-dashboard-hero-grid">
-            <KawaIdentityCard publicKawaId={customer.publicKawaId} status={customer.status} compact />
+            <KawaIdentityCard
+              publicKawaId={customer.publicKawaId}
+              status={customer.status}
+              compact
+              idLabel="VOTRE ID KAWA"
+            />
 
             <div className="kawa-overview-stack">
               <article className="kawa-overview-card kawa-overview-card-primary">

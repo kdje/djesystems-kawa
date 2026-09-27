@@ -5,9 +5,10 @@ type KawaIdentityCardProps = {
   publicKawaId: string;
   status?: string;
   compact?: boolean;
+  idLabel?: string;
 };
 
-export function KawaIdentityCard({ publicKawaId, status, compact = false }: KawaIdentityCardProps) {
+export function KawaIdentityCard({ publicKawaId, status, compact = false, idLabel = "KAWA ID" }: KawaIdentityCardProps) {
   return (
     <section className={`kawa-identity-card${compact ? " kawa-identity-card-compact" : ""}`}>
       <div className="kawa-card-glow" />
@@ -36,7 +37,7 @@ export function KawaIdentityCard({ publicKawaId, status, compact = false }: Kawa
 
           <div className="kawa-id-block">
             <div>
-              <span>KAWA ID</span>
+              <span>{idLabel}</span>
               <strong>{publicKawaId}</strong>
             </div>
             <div className="kawa-verified-badge" title="Identité KAWA active">
