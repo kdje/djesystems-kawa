@@ -20,6 +20,81 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Validate retailer portal Firebase configuration and Admin credential
+        id: validate-firebase
+        shell: bash
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+          FIREBASE_SERVICE_ACCOUNT_B64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          for NAME in \
+            VITE_FIREBASE_API_KEY \
+            VITE_FIREBASE_AUTH_DOMAIN \
+            VITE_FIREBASE_PROJECT_ID \
+            VITE_FIREBASE_APP_ID \
+            FIREBASE_SERVICE_ACCOUNT_B64; do
+            if [[ -z "${!NAME}" ]]; then
+              echo "Missing required GitHub Actions environment setting (variable or secret): $NAME" >&2
+              exit 1
+            fi
+          done
+
+          CREDENTIAL_FILE="$(mktemp "$RUNNER_TEMP/kawa-firebase-service-account.XXXXXX")"
+          KEEP_CREDENTIAL_FILE=0
+          cleanup() {
+            if [[ "$KEEP_CREDENTIAL_FILE" != "1" ]]; then
+              rm -f -- "$CREDENTIAL_FILE"
+            fi
+          }
+          trap cleanup EXIT
+
+          if ! printf '%s' "$FIREBASE_SERVICE_ACCOUNT_B64" | base64 --decode > "$CREDENTIAL_FILE" 2>/dev/null; then
+            echo "FIREBASE_SERVICE_ACCOUNT_B64 is not valid base64." >&2
+            exit 1
+          fi
+
+          python3 - "$CREDENTIAL_FILE" "$VITE_FIREBASE_PROJECT_ID" <<'PY'
+          import json
+          import sys
+
+          credential_path, expected_project_id = sys.argv[1:]
+
+          def reject_nonstandard_constant(_value):
+              raise ValueError("Invalid JSON constant.")
+
+          try:
+              with open(credential_path, encoding="utf-8") as credential_file:
+                  credential = json.load(credential_file, parse_constant=reject_nonstandard_constant)
+          except (OSError, UnicodeError, ValueError):
+              raise SystemExit("FIREBASE_SERVICE_ACCOUNT_B64 must decode to valid JSON.")
+
+          if not isinstance(credential, dict):
+              raise SystemExit("Firebase Admin credential JSON must be an object.")
+          if credential.get("type") != "service_account":
+              raise SystemExit("Firebase Admin credential must be a service-account JSON.")
+          if credential.get("project_id") != expected_project_id:
+              raise SystemExit("Firebase Admin credential project_id does not match VITE_FIREBASE_PROJECT_ID.")
+          private_key = credential.get("private_key")
+          client_email = credential.get("client_email")
+          if (
+              not isinstance(private_key, str)
+              or not private_key.startswith("-----BEGIN PRIVATE KEY-----")
+              or "-----END PRIVATE KEY-----" not in private_key
+              or not isinstance(client_email, str)
+              or not client_email.strip()
+          ):
+              raise SystemExit("Firebase Admin service-account JSON is missing required credential fields.")
+          PY
+
+          printf 'credential_file=%s\n' "$CREDENTIAL_FILE" >> "$GITHUB_OUTPUT"
+          KEEP_CREDENTIAL_FILE=1
+
       - name: Configure AWS credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v6.2.4
         with:
@@ -73,6 +148,31 @@ jobs:
           docker push "$REGISTRY/kawa-platform:${GITHUB_SHA}"
           docker push "$REGISTRY/kawa-platform:dev"
 
+      - name: Build and push retailer portal image
+        shell: bash
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+          VITE_RETAILER_API_BASE_URL: ${{ vars.VITE_RETAILER_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          docker build \
+            -f apps/kawa-retailer-portal/Dockerfile \
+            --build-arg "VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY" \
+            --build-arg "VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN" \
+            --build-arg "VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID" \
+            --build-arg "VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID" \
+            --build-arg "VITE_RETAILER_API_BASE_URL=${VITE_RETAILER_API_BASE_URL:-}" \
+            --build-arg VITE_BASE_PATH=/retailer-portal/ \
+            -t "$REGISTRY/kawa-retailer-portal:${GITHUB_SHA}" \
+            -t "$REGISTRY/kawa-retailer-portal:dev" \
+            apps/kawa-retailer-portal
+          docker push "$REGISTRY/kawa-retailer-portal:${GITHUB_SHA}"
+          docker push "$REGISTRY/kawa-retailer-portal:dev"
+
       - name: Store DEV runtime secrets in SSM Parameter Store
         shell: bash
         env:
@@ -82,10 +182,24 @@ jobs:
           CUSTOMER_SERVICE_CLIENT_SECRET: ${{ secrets.CUSTOMER_SERVICE_CLIENT_SECRET }}
           WALLET_SERVICE_CLIENT_SECRET: ${{ secrets.WALLET_SERVICE_CLIENT_SECRET }}
           RETAILER_SERVICE_CLIENT_SECRET: ${{ secrets.RETAILER_SERVICE_CLIENT_SECRET }}
-          FIREBASE_SERVICE_ACCOUNT_B64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}
+          FIREBASE_CREDENTIAL_FILE: ${{ steps.validate-firebase.outputs.credential_file }}
+          KAWA_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
         run: |
           set -euo pipefail
           umask 077
+          SSM_RUNTIME_INPUT_FILE=""
+          SSM_FIREBASE_INPUT_FILE=""
+          cleanup() {
+            rm -f -- \
+              /tmp/kawa-runtime.env \
+              "${SSM_RUNTIME_INPUT_FILE:-}" \
+              "${SSM_FIREBASE_INPUT_FILE:-}"
+          }
+          trap cleanup EXIT
+          if [[ -z "$KAWA_FIREBASE_PROJECT_ID" ]]; then
+            echo "Missing required GitHub environment variable: VITE_FIREBASE_PROJECT_ID (used as KAWA_FIREBASE_PROJECT_ID)" >&2
+            exit 1
+          fi
 
           cat > /tmp/kawa-runtime.env <<EOF2
           AWS_REGION=${{ vars.AWS_REGION }}
@@ -93,7 +207,9 @@ jobs:
           IMAGE_TAG=${GITHUB_SHA}
           KAWA_DB_PASSWORD=${KAWA_DB_PASSWORD}
           KAWA_DB_ROOT_PASSWORD=${KAWA_DB_ROOT_PASSWORD}
+          KAWA_FIREBASE_PROJECT_ID=${KAWA_FIREBASE_PROJECT_ID}
           KAWA_CORS_ALLOWED_ORIGINS=${{ vars.KAWA_CORS_ALLOWED_ORIGINS }}
+          KAWA_RETAILER_PORTAL_CORS_ORIGINS=${{ vars.KAWA_RETAILER_PORTAL_CORS_ORIGINS }}
           AZURE_TENANT_ID=${{ vars.AZURE_TENANT_ID }}
           KAWA_ENTRA_ISSUER_URI=${{ vars.KAWA_ENTRA_ISSUER_URI }}
           CUSTOMER_SERVICE_CLIENT_ID=${{ vars.CUSTOMER_SERVICE_CLIENT_ID }}
@@ -112,12 +228,54 @@ jobs:
           EOF2
           sed -i 's/^[[:space:]]*//' /tmp/kawa-runtime.env
 
-          aws ssm put-parameter --name "/kawa/dev/runtime-env" --type SecureString --overwrite --value "$(cat /tmp/kawa-runtime.env)"
+          SSM_RUNTIME_INPUT_FILE="$(mktemp "$RUNNER_TEMP/kawa-runtime-ssm-input.XXXXXX")"
+          python3 - /tmp/kawa-runtime.env "$SSM_RUNTIME_INPUT_FILE" <<'PY'
+          import json
+          import sys
 
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_B64" | base64 --decode > /tmp/firebase-service-account.json
-          aws ssm put-parameter --name "/kawa/dev/firebase-service-account" --type SecureString --overwrite --value "$(cat /tmp/firebase-service-account.json)"
+          runtime_path, request_path = sys.argv[1:]
+          try:
+              with open(runtime_path, encoding="utf-8") as runtime_file:
+                  runtime_value = runtime_file.read()
+              with open(request_path, "w", encoding="utf-8") as request_file:
+                  json.dump({
+                      "Name": "/kawa/dev/runtime-env",
+                      "Type": "SecureString",
+                      "Overwrite": True,
+                      "Value": runtime_value,
+                  }, request_file)
+          except (OSError, UnicodeError):
+              raise SystemExit("Unable to prepare the DEV runtime configuration for SSM.")
+          PY
+          aws ssm put-parameter --cli-input-json "file://$SSM_RUNTIME_INPUT_FILE" --query 'Version' --output text
 
-          rm -f /tmp/kawa-runtime.env /tmp/firebase-service-account.json
+          SSM_FIREBASE_INPUT_FILE="$(mktemp "$RUNNER_TEMP/kawa-firebase-ssm-input.XXXXXX")"
+          python3 - "$FIREBASE_CREDENTIAL_FILE" "$SSM_FIREBASE_INPUT_FILE" <<'PY'
+          import json
+          import sys
+
+          credential_path, request_path = sys.argv[1:]
+
+          def reject_nonstandard_constant(_value):
+              raise ValueError("Invalid JSON constant.")
+
+          try:
+              with open(credential_path, encoding="utf-8") as credential_file:
+                  credential = credential_file.read()
+              # Parse once more before constructing the AWS CLI request file.
+              json.loads(credential, parse_constant=reject_nonstandard_constant)
+              with open(request_path, "w", encoding="utf-8") as request_file:
+                  json.dump({
+                      "Name": "/kawa/dev/firebase-service-account",
+                      "Type": "SecureString",
+                      "Overwrite": True,
+                      "Value": credential,
+                  }, request_file)
+          except (OSError, UnicodeError, ValueError):
+              raise SystemExit("Unable to prepare the validated Firebase Admin credential for SSM.")
+          PY
+
+          aws ssm put-parameter --cli-input-json "file://$SSM_FIREBASE_INPUT_FILE" --query 'Version' --output text
 
       - name: Deploy to EC2 through SSM
         shell: bash
@@ -171,3 +329,22 @@ jobs:
             --command-id "$COMMAND_ID" \
             --instance-id "$INSTANCE_ID" \
             --query '{Status:Status,Stdout:StandardOutputContent,Stderr:StandardErrorContent}'
+
+      - name: Clean up Firebase Admin credential
+        if: always()
+        shell: bash
+        env:
+          FIREBASE_CREDENTIAL_FILE: ${{ steps.validate-firebase.outputs.credential_file }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${FIREBASE_CREDENTIAL_FILE:-}" ]]; then
+            case "$FIREBASE_CREDENTIAL_FILE" in
+              "$RUNNER_TEMP"/kawa-firebase-service-account.*)
+                rm -f -- "$FIREBASE_CREDENTIAL_FILE"
+                ;;
+              *)
+                echo "Refusing to remove an unexpected Firebase credential path." >&2
+                exit 1
+                ;;
+            esac
+          fi

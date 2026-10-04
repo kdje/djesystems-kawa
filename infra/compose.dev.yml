@@ -39,6 +39,7 @@ services:
       - customer-service
       - wallet-service
       - retailer-service
+      - kawa-retailer-portal
 
     networks:
       - kawa-net
@@ -145,8 +146,11 @@ services:
       RETAILER_DB_URL: jdbc:mysql://retailer-db:3306/kawa_retailer?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       MYSQL_USER: kawa
       MYSQL_PASSWORD: ${KAWA_DB_PASSWORD}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-service-account.json
     ports:
       - "127.0.0.1:8083:8083"
+    volumes:
+      - ./secrets/firebase-service-account.json:/app/secrets/firebase-service-account.json:ro
     depends_on:
       retailer-db:
         condition: service_healthy
@@ -158,6 +162,22 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:5173:80"
+    networks: [kawa-net]
+
+  kawa-retailer-portal:
+    image: ${ECR_REGISTRY}/kawa-retailer-portal:${IMAGE_TAG}
+    container_name: kawa-retailer-portal
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5174:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    depends_on:
+      - retailer-service
     networks: [kawa-net]
 
 volumes:

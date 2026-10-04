@@ -6,7 +6,7 @@ on:
       - develop
 
 jobs:
-  build:
+  platform:
     runs-on: ubuntu-latest
 
     defaults:
@@ -24,3 +24,42 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+
+  retailer-portal:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/kawa-retailer-portal
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/kawa-retailer-portal/package-lock.json
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      # Safe placeholder values exercise the Docker image build without
+      # depending on a real Firebase project configuration.
+      - name: Validate portal Docker image build
+        working-directory: .
+        env:
+          VITE_FIREBASE_API_KEY: ci-placeholder-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: ci-placeholder-project
+          VITE_FIREBASE_APP_ID: 1:000000000000:web:ci-placeholder
+        run: |
+          docker build \
+            --build-arg "VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY" \
+            --build-arg "VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN" \
+            --build-arg "VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID" \
+            --build-arg "VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID" \
+            --build-arg VITE_BASE_PATH=/retailer-portal/ \
+            -f apps/kawa-retailer-portal/Dockerfile \
+            apps/kawa-retailer-portal
