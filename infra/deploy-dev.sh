@@ -55,6 +55,7 @@ wait_http "customer-service" "http://127.0.0.1:8081/actuator/health" 90
 wait_http "wallet-service" "http://127.0.0.1:8082/actuator/health" 90
 wait_http "retailer-service" "http://127.0.0.1:8083/actuator/health" 90
 wait_http "kawa-platform" "http://127.0.0.1:5173/" 30
+wait_http "kawa-retailer-portal" "http://127.0.0.1:5174/" 30
 wait_http "gateway" "http://127.0.0.1:8080/health" 30
 
 docker compose --env-file .env -f compose.dev.yml ps

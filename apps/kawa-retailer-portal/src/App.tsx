@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Link,
   Navigate,
   NavLink,
   Route,
@@ -107,10 +108,10 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: User) => void }) {
   return (
     <main className="login-screen">
       <section className="login-card">
-        <a className="brand" href="/login" aria-label="KAWA accueil">
+        <Link className="brand" to="/login" aria-label="KAWA accueil">
           <span className="brand-mark">K</span>
           <span>KAWA <small>PARTNER</small></span>
-        </a>
+        </Link>
         <p className="eyebrow">ESPACE PROFESSIONNEL</p>
         <h1>Bienvenue dans votre portail</h1>
         <p className="muted">Connectez-vous pour gérer votre espace enseigne.</p>
@@ -194,9 +195,9 @@ function PortalLayout({
   return (
     <div className="portal-shell">
       <aside className="sidebar">
-        <a className="brand sidebar-brand" href="/dashboard">
+        <Link className="brand sidebar-brand" to="/dashboard">
           <span className="brand-mark">K</span><span>KAWA <small>PARTNER</small></span>
-        </a>
+        </Link>
         <p className="nav-caption">ESPACE ENSEIGNE</p>
         <nav aria-label="Navigation principale">
           <NavLink to="/dashboard"><span>⌂</span> Vue d’ensemble</NavLink>

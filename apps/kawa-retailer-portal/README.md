@@ -18,6 +18,31 @@ En déploiement, fournir `VITE_RETAILER_API_BASE_URL` selon l'URL de l'API; si
 elle est vide, le portail utilise la même origine. Les valeurs Firebase `VITE_*`
 sont la configuration cliente Firebase, pas des identifiants d'administration.
 
+## Image et déploiement DEV
+
+Le Dockerfile produit une image Nginx autonome (port 80), avec fallback SPA et
+proxy same-origin des requêtes `/api/retailer-portal/**` vers
+`retailer-service:8083`. En DEV, le gateway sert le portail sous
+`/retailer-portal/` sur le hostname API déjà configuré; il retire ce préfixe
+avant de transmettre les requêtes au conteneur. Le portail utilise le même
+hostname pour appeler le gateway, donc le CORS n'a pas à être élargi. Le compose
+publie aussi directement le portail sur `http://localhost:5174` pour les
+vérifications locales; le port 5173 reste réservé à `kawa-platform`.
+L'image de déploiement exige les variables GitHub Environment `dev` suivantes:
+`VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
+`VITE_FIREBASE_PROJECT_ID` et `VITE_FIREBASE_APP_ID`. Ce sont des valeurs de
+configuration Web publiques, à configurer pour le projet Firebase utilisé; le
+workflow échoue avant l'accès AWS si l'une manque. Aucun credential Firebase
+Admin n'est utilisé pour construire le portail.
+
+`VITE_RETAILER_API_BASE_URL` est facultative et doit rester vide pour le
+déploiement same-origin recommandé. Si une URL API cross-origin est configurée,
+définir la variable GitHub Environment `dev` `KAWA_RETAILER_PORTAL_CORS_ORIGINS`
+avec l'origine exacte du portail; le workflow la transmet au runtime du
+`retailer-service`. Ne pas utiliser `*`. Le proxy du gateway route
+`/api/retailer-portal/**` vers le `retailer-service`, sans réécrire le chemin ni
+contourner l'authentification Firebase.
+
 ## Configuration backend Firebase/CORS
 
 Le `retailer-service` exige `KAWA_FIREBASE_PROJECT_ID` et les identifiants
