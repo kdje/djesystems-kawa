@@ -38,6 +38,12 @@ kawa:
     issuer-uri: ${KAWA_ENTRA_ISSUER_URI}
     audience: ${RETAILER_SERVICE_CLIENT_ID}
 
+  retailer-portal:
+    firebase:
+      project-id: ${KAWA_FIREBASE_PROJECT_ID}
+    cors:
+      allowed-origins: ${KAWA_RETAILER_PORTAL_CORS_ORIGINS:http://localhost:5174}
+
   azure:
     tenant-id: ${AZURE_TENANT_ID}
     client-id: ${RETAILER_SERVICE_CLIENT_ID}
