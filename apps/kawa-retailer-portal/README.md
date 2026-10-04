@@ -43,6 +43,26 @@ avec l'origine exacte du portail; le workflow la transmet au runtime du
 `/api/retailer-portal/**` vers le `retailer-service`, sans réécrire le chemin ni
 contourner l'authentification Firebase.
 
+## Connexion Firebase en DEV
+
+La configuration de code du client ne peut pas autoriser un domaine ou activer
+un fournisseur dans Firebase Console. Pour la connexion sur
+`https://dev.kawa-retail.com/retailer-portal/`, l'administrateur du projet
+Firebase doit vérifier dans **Authentication** que le fournisseur Google est
+activé et que `dev.kawa-retail.com` figure parmi les domaines autorisés. Ajouter
+aussi `api-dev.kawa-retail.com` si le portail est utilisé depuis cette origine.
+Vérifier que le client OAuth Google autorise le domaine d'authentification
+Firebase (`VITE_FIREBASE_AUTH_DOMAIN`) et son callback
+`https://<authDomain>/__/auth/handler`, ainsi que les restrictions de référent
+de la clé API pour le domaine du portail.
+
+Le portail affiche maintenant les erreurs Firebase usuelles (domaine non
+autorisé, fournisseur désactivé, popup bloquée/fermée, problème réseau et clé
+API invalide) au lieu d'un message de connexion générique. Après une connexion
+Firebase réussie, l'accès requiert toujours une association enseigne active
+dans `retailer_user`; cette configuration et la console Firebase ne sont pas
+modifiées par ce dépôt.
+
 ## Configuration backend Firebase/CORS
 
 Le `retailer-service` exige `KAWA_FIREBASE_PROJECT_ID` et les identifiants

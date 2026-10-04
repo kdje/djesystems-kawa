@@ -16,6 +16,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { createPortalApi, PortalApiError } from "./api/portalApi";
+import { authErrorMessage } from "./authErrorMessage";
 import { auth, firebaseConfigurationReady } from "./firebase";
 import type { PortalBilling, PortalRetailer, PortalSubscription } from "./types";
 
@@ -98,8 +99,8 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: User) => void }) {
       const result = await login();
       onSignedIn(result.user);
       navigate("/dashboard", { replace: true });
-    } catch {
-      setError("Connexion impossible. Vérifiez vos identifiants ou réessayez.");
+    } catch (reason: unknown) {
+      setError(authErrorMessage(reason));
     } finally {
       setBusy(false);
     }
