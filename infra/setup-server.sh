@@ -66,11 +66,38 @@ $SUDO mkdir -p /opt/kawa/secrets /opt/kawa/logs
 $SUDO chown -R ec2-user:ec2-user /opt/kawa
 
 log "Configuring Nginx reverse proxy..."
+$SUDO install -d -m 0755 /etc/nginx/snippets
+$SUDO tee /etc/nginx/snippets/kawa-retailer-portal-locations.conf >/dev/null <<'PORTAL_NGINX'
+location = /retailer-portal {
+    return 301 /retailer-portal/;
+}
+
+location ^~ /retailer-portal/ {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+location ^~ /api/retailer-portal/ {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+PORTAL_NGINX
+
 $SUDO tee /etc/nginx/conf.d/kawa-dev.conf >/dev/null <<NGINX
 server {
     listen 80;
     listen [::]:80;
     server_name ${FRONT_DOMAIN};
+
+    include /etc/nginx/snippets/kawa-retailer-portal-locations.conf;
 
     location / {
         proxy_pass http://127.0.0.1:5173;
